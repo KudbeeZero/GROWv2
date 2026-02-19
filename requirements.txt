@@ -1,7 +1,7 @@
-flask==3.0.0
+flask==2.3.2
 flask-cors==4.0.0
 sqlalchemy==2.0.23
 pydantic==2.5.0
 python-dotenv==1.0.0
-numpy==1.26.2
-pandas==2.1.4
+numpy==1.26.0
+pandas==2.1.1
