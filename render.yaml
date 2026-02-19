@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: growv2-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python demo.py
+    autoDeploy: true
