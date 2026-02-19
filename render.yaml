@@ -1,14 +1,9 @@
 services:
   - type: web
-    name: growv2-service
+    name: growv2-api
     env: python
     plan: starter
     autoDeploy: true
     buildCommand: pip install -r requirements.txt
-    startCommand: python demo.py
+    startCommand: python server.py
     branch: main
-    envVars:  # optional, add any environment variables your app needs
-      - key: FLASK_ENV
-        value: production
-      - key: PORT
-        value: 10000  # Render sets PORT dynamically; your app should use os.environ.get("PORT", 10000)
