@@ -53,9 +53,23 @@ harvest_sale:
     epic: 4.0
     legendary: 8.0
   thc_bonus_per_pct_over_15: 0.04  # +4% value per THC point above 15%
+  # A strong dominant-terpene expression earns up to this fractional premium
+  # (e.g. 0.25 = +25% at a fully expressed terpene).
+  terpene_premium_max: 0.25
   # Diminishing returns: grams above the soft cap are worth less per gram.
   soft_cap_grams: 120
   soft_cap_factor: 0.6
+
+# Post-harvest drying/curing. An optional, time-gated step that raises a
+# harvest's quality (and therefore its sale value) — but over-drying erodes it.
+# Deterministic / compute-on-read; see simulation/curing.py.
+curing:
+  optimal_hours: 72          # ~3 days of cure for the peak quality bonus
+  default_target_hours: 72   # used when the player doesn't specify a target
+  max_target_hours: 336      # 2-week cap on a committed cure
+  max_quality_bonus: 10.0    # up to +10 quality at a perfect cure
+  over_dry_penalty_per_hour: 0.04
+  over_dry_grace_hours: 48   # forgiving window past optimal before erosion
 
 # Player-to-player marketplace. Fees/taxes are GROW sinks (burned) to fight
 # inflation.

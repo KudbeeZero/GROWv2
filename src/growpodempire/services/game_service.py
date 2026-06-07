@@ -29,7 +29,8 @@ from ..enums import (
     ListingItemType,
 )
 from ..genetics.breeding import cross, derive_strain_fields, assign_rarity
-from ..simulation import engine
+from ..genetics.traits import express_terpenes
+from ..simulation import engine, curing
 from ..simulation.clock import Clock, SystemClock
 from . import leveling_service
 from ..db.models import (
@@ -542,6 +543,10 @@ class GameService:
         thc_actual = (strain.thc_min + strain.thc_max) / 2.0
         cbd_actual = (strain.cbd_min + strain.cbd_max) / 2.0
 
+        # Terpene expression scales with how well the plant was grown.
+        vigor_factor = 0.85 + 0.15 * max(0.0, min(100.0, plant.health)) / 100.0
+        terpenes = express_terpenes(plant.genome, vigor_factor)
+
         plant.harvested = True
         plant.growth_stage = GrowthStage.HARVEST.value
 
@@ -554,26 +559,118 @@ class GameService:
             thc_actual=thc_actual,
             cbd_actual=cbd_actual,
             rarity_snapshot=strain.rarity,
+            terpenes=terpenes,
         )
         self.session.add(harvest)
         self.session.flush()
 
         if sell:
-            value = pricing.harvest_value(
-                weight_g, quality, strain.rarity, self.cfg, thc_actual=thc_actual
-            )
-            post(
-                self.session,
-                player_id,
-                value,
-                LedgerEntryType.HARVEST_SALE,
-                ref_type="harvest",
-                ref_id=harvest.id,
-            )
-            harvest.sale_value = value
-            harvest.sold = True
+            self._sell_harvest(harvest)
 
         leveling_service.award(self.session, player_id, "harvest", self.cfg)
+        return harvest
+
+    def _terpene_intensity(self, harvest: Harvest) -> float:
+        """Strongest expressed terpene on a harvest (0..1), for the sale premium."""
+        terps = harvest.terpenes or {}
+        return max((float(v) for v in terps.values()), default=0.0)
+
+    def _sell_harvest(self, harvest: Harvest) -> Decimal:
+        """Post the NPC-market sale of a harvest and stamp it sold. Idempotent
+        guard lives in the public callers."""
+        value = pricing.harvest_value(
+            harvest.weight_g,
+            harvest.quality,
+            harvest.rarity_snapshot,
+            self.cfg,
+            thc_actual=harvest.thc_actual or 15.0,
+            terpene_intensity=self._terpene_intensity(harvest),
+        )
+        post(
+            self.session,
+            harvest.player_id,
+            value,
+            LedgerEntryType.HARVEST_SALE,
+            ref_type="harvest",
+            ref_id=harvest.id,
+        )
+        harvest.sale_value = value
+        harvest.sold = True
+        return value
+
+    def _get_owned_harvest(self, player_id: str, harvest_id: str) -> Harvest:
+        harvest = self.session.get(Harvest, harvest_id)
+        if harvest is None or harvest.player_id != player_id:
+            raise GameError("Harvest not found")
+        return harvest
+
+    def list_harvests(self, player_id: str) -> List[Harvest]:
+        return (
+            self.session.query(Harvest)
+            .filter(Harvest.player_id == player_id)
+            .order_by(Harvest.harvested_at.desc())
+            .all()
+        )
+
+    def sell_harvest(self, player_id: str, harvest_id: str) -> Harvest:
+        """Sell a stored (unsold) harvest to the NPC market."""
+        harvest = self._get_owned_harvest(player_id, harvest_id)
+        if harvest.sold:
+            raise GameError("Harvest already sold")
+        if harvest.cure_status == "curing":
+            raise GameError("Finish curing this harvest before selling it")
+        self._sell_harvest(harvest)
+        return harvest
+
+    # ----- Curing (post-harvest quality) ----------------------------------
+    def start_cure(
+        self, player_id: str, harvest_id: str, target_hours: Optional[float] = None
+    ) -> Harvest:
+        harvest = self._get_owned_harvest(player_id, harvest_id)
+        if harvest.sold:
+            raise GameError("Cannot cure a harvest that has been sold")
+        if harvest.cure_status != "none":
+            raise GameError(f"Harvest is already {harvest.cure_status}")
+
+        c = self.cfg.curing
+        default_hours = float(c.get("default_target_hours", 72))
+        max_hours = float(c.get("max_target_hours", 336))
+        hours = default_hours if target_hours is None else float(target_hours)
+        if hours <= 0:
+            raise GameError("Cure duration must be positive")
+        hours = min(hours, max_hours)
+
+        harvest.base_quality = harvest.quality
+        harvest.cure_started_at = self.clock.now()
+        harvest.cure_target_hours = hours
+        harvest.cure_status = "curing"
+        return harvest
+
+    def finish_cure(
+        self, player_id: str, harvest_id: str, sell: bool = False
+    ) -> Harvest:
+        harvest = self._get_owned_harvest(player_id, harvest_id)
+        if harvest.cure_status != "curing":
+            raise GameError("This harvest is not curing")
+
+        result = curing.cure_progress(
+            harvest.base_quality if harvest.base_quality is not None else harvest.quality,
+            harvest.cure_started_at,
+            harvest.cure_target_hours or 0.0,
+            self.clock.now(),
+            self.cfg,
+        )
+        if not result.done:
+            raise GameError(
+                f"Cure not finished yet ({result.elapsed_hours:.1f}h of "
+                f"{harvest.cure_target_hours:.1f}h elapsed)"
+            )
+
+        harvest.quality = result.quality
+        harvest.cure_quality_bonus = result.bonus
+        harvest.cure_status = "cured"
+        if sell:
+            self._sell_harvest(harvest)
         return harvest
 
     # ----- Marketplace ----------------------------------------------------

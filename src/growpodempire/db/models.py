@@ -315,8 +315,17 @@ class Harvest(UUIDPrimaryKeyMixin, Base):
     thc_actual: Mapped[Optional[float]] = mapped_column(Float)
     cbd_actual: Mapped[Optional[float]] = mapped_column(Float)
     rarity_snapshot: Mapped[str] = mapped_column(String(16), nullable=False)
+    # Expressed terpene vector at harvest (trait -> 0..1 intensity).
+    terpenes: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)
     sale_value: Mapped[Optional[Decimal]] = mapped_column(MONEY)
     sold: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Post-harvest curing (Phase 1 expansion). "none" -> "curing" -> "cured".
+    cure_status: Mapped[str] = mapped_column(String(16), default="none", nullable=False)
+    cure_started_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    cure_target_hours: Mapped[Optional[float]] = mapped_column(Float)
+    base_quality: Mapped[Optional[float]] = mapped_column(Float)  # quality before curing
+    cure_quality_bonus: Mapped[Optional[float]] = mapped_column(Float)  # net delta applied
 
     # On-chain (Phase 3).
     nft_asset_id: Mapped[Optional[int]] = mapped_column(Integer)

@@ -70,6 +70,10 @@ class EconomyConfig:
     def market(self) -> Dict[str, Any]:
         return self.raw["market"]
 
+    @property
+    def curing(self) -> Dict[str, Any]:
+        return self.raw.get("curing", {})
+
 
 def load_economy_config(path: Optional[str] = None) -> EconomyConfig:
     """Load (uncached) an EconomyConfig from a YAML path."""

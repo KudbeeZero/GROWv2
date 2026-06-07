@@ -59,6 +59,19 @@ Each entry: branch · what shipped · test count after merge.
   version/name string; named the chain `TREASURY` sentinel (and resolved it in the real provider);
   guarded web `localStorage` access.
 
+## Expansion Wave A — curing & terpenes
+- `claude/game-expansion-algo-sdk` · **Post-harvest curing**: a deterministic, compute-on-read
+  quality model (`simulation/curing.py`). Harvest with `sell=false`, `start_cure` (commit a
+  duration), then `finish_cure` for a quality bonus (diminishing returns toward an optimal window;
+  over-drying erodes quality). New harvest routes: list, `cure`, `cure/finish`, and `sell` (the
+  latter also fixes that `sell=false` harvests were previously unsellable). Tuning in
+  `balance.yaml:curing`.
+- **Terpene/cannabinoid genetics**: four quantitative terpene traits (myrcene/limonene/
+  caryophyllene/pinene) now inherit through the existing breeding engine and are expressed on each
+  harvest (scaled by how well the plant was grown). The catalog's qualitative `terpenes` tags seed
+  the genome. A strong dominant terpene earns a sale premium (`balance.yaml:harvest_sale.
+  terpene_premium_max`). Migration `b3d7c1a9e240` adds the harvest cure/terpene columns.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,

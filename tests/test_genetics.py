@@ -8,8 +8,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from growpodempire.genetics.traits import (
     TRAIT_SPECS,
+    TERPENE_TRAITS,
     genome_from_traits,
     normalize_genome,
+    terpene_genes_from_tags,
+    express_terpenes,
 )
 from growpodempire.genetics.breeding import cross, derive_strain_fields, assign_rarity
 
@@ -28,6 +31,30 @@ def test_cross_is_deterministic_for_a_seed():
     r2 = cross(a, b, random.Random(42), stability_a=0.8, stability_b=0.8)
     assert r1.genome == r2.genome
     assert r1.stability == r2.stability
+
+
+def test_terpene_tags_seed_genes_and_inherit_through_breeding():
+    # Tags map to leading vs. baseline terpene gene values.
+    genes = terpene_genes_from_tags(["myrcene", "Limonene"])
+    assert genes["myrcene"] > 0.5 and genes["limonene"] > 0.5
+    assert genes["pinene"] < 0.3
+
+    # A myrcene-led parent crossed with a pinene-led parent yields offspring
+    # whose terpene genes sit between the parents (and inside 0..1).
+    a = genome_from_traits({**terpene_genes_from_tags(["myrcene"]), "thc": 18})
+    b = genome_from_traits({**terpene_genes_from_tags(["pinene"]), "thc": 18})
+    r = cross(a, b, random.Random(3), stability_a=0.9, stability_b=0.9)
+    for t in TERPENE_TRAITS:
+        assert 0.0 <= r.genome[t]["value"] <= 1.0
+    assert r.genome["myrcene"]["value"] > r.genome["pinene"]["value"] - 0.1
+
+
+def test_express_terpenes_scales_with_vigor():
+    g = genome_from_traits({**terpene_genes_from_tags(["myrcene"]), "thc": 20})
+    strong = express_terpenes(g, vigor_factor=1.0)
+    weak = express_terpenes(g, vigor_factor=0.85)
+    assert strong["myrcene"] > weak["myrcene"]
+    assert all(0.0 <= v <= 1.0 for v in strong.values())
 
 
 def test_cross_offspring_traits_within_valid_ranges():

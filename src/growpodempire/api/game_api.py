@@ -352,6 +352,58 @@ def harvest(player_id, plant_id):
         return _error(str(e))
 
 
+# ----- Harvests: inventory, curing, sale ---------------------------------
+@game_bp.get("/players/<player_id>/harvests")
+@require_player
+def list_harvests(player_id):
+    with session_scope() as s:
+        harvests = GameService(s).list_harvests(player_id)
+        payload = [S.harvest_dict(h) for h in harvests]
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/cure")
+@require_player
+def start_cure(player_id, harvest_id):
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        with session_scope() as s:
+            h = GameService(s).start_cure(
+                player_id, harvest_id, target_hours=data.get("target_hours")
+            )
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/cure/finish")
+@require_player
+def finish_cure(player_id, harvest_id):
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        with session_scope() as s:
+            h = GameService(s).finish_cure(
+                player_id, harvest_id, sell=bool(data.get("sell", False))
+            )
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/sell")
+@require_player
+def sell_harvest(player_id, harvest_id):
+    try:
+        with session_scope() as s:
+            h = GameService(s).sell_harvest(player_id, harvest_id)
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
 # ----- Simulation (real-time grow) ---------------------------------------
 @game_bp.get("/players/<player_id>/plants/<plant_id>/state")
 @require_player
