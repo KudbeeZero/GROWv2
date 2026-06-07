@@ -25,3 +25,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/strain-search-favorites` (merged) · strain search/filter + favorites · 95 tests.
 - `feature/leaderboards` (merged) · richest/breeders/harvests/level rankings · 97 tests.
 - `feature/weather-events` (merged) · random pod weather feeding the sim · 100 tests.
+- `feature/pod-automation` (merged) · pod tiers grant auto-water/feed honored by the sim · 103 tests.
