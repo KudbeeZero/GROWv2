@@ -13,6 +13,7 @@ from ..services.game_service import GameService, GameError
 from ..services.simulation_service import SimulationService
 from ..services.minting_service import MintingService
 from ..services.progression_service import ProgressionService
+from ..services.leaderboard_service import LeaderboardService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
@@ -94,6 +95,23 @@ def get_ledger(player_id):
     with session_scope() as s:
         entries = GameService(s).get_ledger(player_id)
         payload = [S.ledger_dict(e) for e in entries]
+    return jsonify(payload)
+
+
+# ----- Leaderboards ------------------------------------------------------
+@game_bp.get("/leaderboards/<board>")
+def leaderboards(board):
+    limit = int(request.args.get("limit", 10))
+    boards = {
+        "richest": "richest",
+        "breeders": "top_breeders",
+        "harvests": "biggest_harvesters",
+        "level": "top_levels",
+    }
+    if board not in boards:
+        return _error(f"Unknown leaderboard '{board}'", 404)
+    with session_scope() as s:
+        payload = getattr(LeaderboardService(s), boards[board])(limit)
     return jsonify(payload)
 
 
