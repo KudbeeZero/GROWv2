@@ -10,6 +10,7 @@ from ..app import GrowPodEmpire
 from ..models import EnvironmentalCondition, GrowthStage
 from ..db.session import init_db
 from .game_api import game_bp
+from .errors import register_error_handlers
 
 
 def create_app(init_database: bool = True):
@@ -20,6 +21,9 @@ def create_app(init_database: bool = True):
     # Ensure the persistent game schema exists (no-op for already-migrated DBs).
     if init_database:
         init_db()
+
+    # Consistent JSON error responses + request-size cap.
+    register_error_handlers(app)
 
     # DB-backed game layer (players, economy, strains, breeding, market).
     app.register_blueprint(game_bp)
