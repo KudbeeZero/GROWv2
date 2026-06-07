@@ -22,3 +22,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/openapi-docs` (merged) · /openapi.json + Swagger UI at /docs · 92 tests.
 
 ### Wave 1 (production hardening) complete: auth, errors, health, CI, docker, OpenAPI.
+- `feature/strain-search-favorites` (merged) · strain search/filter + favorites · 95 tests.
