@@ -138,6 +138,22 @@ class Strain(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     nft_status: Mapped[str] = mapped_column(String(16), default="none", nullable=False)
 
 
+class StrainFavorite(UUIDPrimaryKeyMixin, Base):
+    """A player's bookmark of a strain."""
+
+    __tablename__ = "strain_favorites"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    strain_id: Mapped[str] = mapped_column(ForeignKey("strains.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_fav_player_strain", "player_id", "strain_id", unique=True),
+    )
+
+
 class SeedInventory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """A stack of seeds of a given strain owned by a player."""
 

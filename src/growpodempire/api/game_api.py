@@ -100,11 +100,52 @@ def get_ledger(player_id):
 # ----- Strains -----------------------------------------------------------
 @game_bp.get("/strains")
 def list_strains():
-    catalog_only = request.args.get("catalog_only", "false").lower() == "true"
+    args = request.args
+
+    def _f(name):
+        v = args.get(name)
+        return float(v) if v not in (None, "") else None
+
     with session_scope() as s:
-        strains = GameService(s).list_strains(catalog_only=catalog_only)
+        strains = GameService(s).list_strains(
+            catalog_only=args.get("catalog_only", "false").lower() == "true",
+            q=args.get("q"),
+            rarity=args.get("rarity"),
+            lineage_type=args.get("lineage_type"),
+            min_thc=_f("min_thc"),
+            max_thc=_f("max_thc"),
+            min_indica=_f("min_indica"),
+            max_indica=_f("max_indica"),
+        )
         payload = [S.strain_dict(st) for st in strains]
     return jsonify(payload)
+
+
+@game_bp.get("/players/<player_id>/favorites")
+def list_favorites(player_id):
+    with session_scope() as s:
+        strains = GameService(s).list_favorites(player_id)
+        payload = [S.strain_dict(st) for st in strains]
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/strains/<strain_id>/favorite")
+@require_player
+def add_favorite(player_id, strain_id):
+    try:
+        with session_scope() as s:
+            GameService(s).add_favorite(player_id, strain_id)
+        return jsonify({"favorited": True}), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.delete("/players/<player_id>/strains/<strain_id>/favorite")
+@require_player
+def remove_favorite(player_id, strain_id):
+    with session_scope() as s:
+        GameService(s).remove_favorite(player_id, strain_id)
+    return jsonify({"favorited": False})
 
 
 @game_bp.get("/strains/<strain_id>")

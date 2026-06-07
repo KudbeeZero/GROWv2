@@ -35,6 +35,7 @@ from ..db.models import (
     Player,
     Wallet,
     Strain,
+    StrainFavorite,
     SeedInventory,
     GrowPod,
     Plant,
@@ -118,17 +119,75 @@ class GameService:
         )
 
     # ----- Strains & seeds ------------------------------------------------
-    def list_strains(self, catalog_only: bool = False) -> List[Strain]:
-        q = self.session.query(Strain)
+    def list_strains(
+        self,
+        catalog_only: bool = False,
+        q: Optional[str] = None,
+        rarity: Optional[str] = None,
+        lineage_type: Optional[str] = None,
+        min_thc: Optional[float] = None,
+        max_thc: Optional[float] = None,
+        max_indica: Optional[float] = None,
+        min_indica: Optional[float] = None,
+    ) -> List[Strain]:
+        query = self.session.query(Strain)
         if catalog_only:
-            q = q.filter(Strain.is_base_catalog.is_(True))
-        return q.order_by(Strain.rarity, Strain.name).all()
+            query = query.filter(Strain.is_base_catalog.is_(True))
+        if q:
+            query = query.filter(Strain.name.ilike(f"%{q}%"))
+        if rarity:
+            query = query.filter(Strain.rarity == rarity)
+        if lineage_type:
+            query = query.filter(Strain.lineage_type == lineage_type)
+        if min_thc is not None:
+            query = query.filter(Strain.thc_max >= min_thc)
+        if max_thc is not None:
+            query = query.filter(Strain.thc_min <= max_thc)
+        if min_indica is not None:
+            query = query.filter(Strain.indica_ratio >= min_indica)
+        if max_indica is not None:
+            query = query.filter(Strain.indica_ratio <= max_indica)
+        return query.order_by(Strain.rarity, Strain.name).all()
 
     def get_strain(self, strain_id: str) -> Strain:
         strain = self.session.get(Strain, strain_id)
         if strain is None:
             raise GameError(f"Strain {strain_id} not found")
         return strain
+
+    # ----- Favorites ------------------------------------------------------
+    def add_favorite(self, player_id: str, strain_id: str) -> StrainFavorite:
+        self.get_player(player_id)
+        self.get_strain(strain_id)
+        existing = (
+            self.session.query(StrainFavorite)
+            .filter(
+                StrainFavorite.player_id == player_id,
+                StrainFavorite.strain_id == strain_id,
+            )
+            .one_or_none()
+        )
+        if existing:
+            return existing
+        fav = StrainFavorite(player_id=player_id, strain_id=strain_id)
+        self.session.add(fav)
+        self.session.flush()
+        return fav
+
+    def remove_favorite(self, player_id: str, strain_id: str) -> None:
+        self.session.query(StrainFavorite).filter(
+            StrainFavorite.player_id == player_id,
+            StrainFavorite.strain_id == strain_id,
+        ).delete()
+
+    def list_favorites(self, player_id: str) -> List[Strain]:
+        return (
+            self.session.query(Strain)
+            .join(StrainFavorite, StrainFavorite.strain_id == Strain.id)
+            .filter(StrainFavorite.player_id == player_id)
+            .order_by(Strain.name)
+            .all()
+        )
 
     def get_seed_inventory(self, player_id: str) -> List[SeedInventory]:
         return (
