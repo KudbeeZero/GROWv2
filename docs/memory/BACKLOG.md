@@ -10,9 +10,12 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🔴 ⬜ **Retire/replace `docs/NEXT_SESSION_SPRINT3.md`** — Sprint 3 is done; the handoff is stale.
 - 🔴 ⬜ **Fix `BUILDLOG.md` header** referencing the old trunk branch
   `claude/cannabis-game-lut-economics-utfiK`. *(fixed 2026-06-08 — keep an eye on drift)*
-- 🔴 ⬜ **Pin/repair the dev env install** — `requirements*.txt` collide with the system PyYAML
-  (`Cannot uninstall PyYAML 6.0.1`); contributors hit this on a clean machine. Document a venv
-  flow or loosen the pin. Add a SessionStart hook so web sessions can run tests immediately.
+- ✅ **Repair the dev env install** (2026-06-08) — added `Makefile` (`make setup` = venv-based
+  install, sidesteps the system-PyYAML collision), a `pyproject.toml` build backend so
+  `pip install -e .` uses PEP 660 (no more legacy `install_layout` crash), and a
+  `.claude/hooks/session-start.sh` SessionStart hook so web sessions install deps automatically
+  (sets `PYTHONPATH=src`, mirroring CI). Validated: hook exit 0, `make setup && make test` →
+  139 passed.
 
 ## 🟠 Medium (next 1–2 weeks — quality & the next real capability)
 - 🟠 ⬜ **CI coverage gate** — measure + floor coverage so the 139-test suite can't silently rot.

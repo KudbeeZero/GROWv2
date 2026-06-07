@@ -1,0 +1,7 @@
+# Build configuration. Project metadata still lives in setup.py; this file
+# routes builds through PEP 517/660 so editable installs (`pip install -e .`)
+# use the modern path instead of the legacy `setup.py develop`, which breaks
+# on some distro-patched setuptools ("AttributeError: install_layout").
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"

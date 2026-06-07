@@ -31,11 +31,14 @@ core loop**: grow → care → harvest → cure → sell/breed/stabilize → min
 
 ## Run it
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt && pip install -e .
-python -m pytest -q          # full suite (currently 139 tests, all green)
-python server.py             # local API
-cd web && npm i && npm run dev   # web client
+make setup                   # one-time: venv + deps + editable install
+make test                    # full suite (currently 139 tests, all green)
+make lint                    # the lint gate CI uses
+make serve                   # local API   (web: cd web && npm i && npm run dev)
 ```
+Claude Code on the web installs deps automatically via `.claude/hooks/session-start.sh`
+(it sets `PYTHONPATH=src`, mirroring CI). The bare `pip install` path collides with a
+distro-managed PyYAML on some boxes — use `make setup` (a venv) locally to avoid it.
 
 ## Memory layer map (read deeper as needed)
 | Layer | File | Purpose | Volatility |
