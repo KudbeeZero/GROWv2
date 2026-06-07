@@ -132,8 +132,11 @@ A pod is a growing chamber that holds plants and carries an environment
 | Tier | Cost (GROW) | Automation |
 |---|---:|---|
 | **Basic** | 100 | None |
-| **Standard** | 400 | (mid-tier) |
-| **Pro** | 1200 | Auto-water & auto-feed (see [§15](#15--pod-automation)) |
+| **Standard** | 400 | Auto-**water** only |
+| **Pro** | 1200 | Auto-**water** + auto-**feed** (see [§15](#15--pod-automation)) |
+
+Pods can also be **upgraded** in place (paying the price difference) rather than
+rebuilt.
 
 The pod's environment feeds directly into the simulation. Deviations from the
 optimal bands sap plant health, and humidity drives pests & disease.
@@ -398,8 +401,8 @@ inflation.
 
 ## 13 · NPC contracts
 
-Timed delivery orders. Accept a contract, deliver the target grams of the right
-rarity before the deadline, get paid in GROW **and** XP.
+Timed delivery orders. Draw a contract offer, deliver (fulfill) the target grams
+of the right rarity before the deadline, and get paid in GROW **and** XP.
 
 - **Duration:** 7 days each.
 - Offers are drawn from weighted templates:
@@ -437,16 +440,26 @@ you're not watching.
 ## 15 · Pod automation
 
 Higher pod tiers top up resources automatically when they run low — the same
-top-up the sim would credit a diligent player:
+top-up the sim would credit a diligent player. **Which resources are automated
+depends on the tier:**
+
+| Tier | Auto-water | Auto-feed |
+|---|:--:|:--:|
+| Basic | ❌ | ❌ |
+| **Standard** | ✅ | ❌ |
+| **Pro** | ✅ | ✅ |
+
+Automation thresholds:
 
 | Resource | Refills when below | Refills to |
 |---|---:|---:|
 | Water | 45 | 72 |
 | Nutrients | 40 | 72 |
 
-A **Pro pod** effectively babysits water and nutrients, freeing you to focus on
-pests, disease, environment, and weather. It does **not** treat pests/disease —
-those still need you.
+A **Standard pod** auto-waters (killing the overwater/underwater failure modes); a
+**Pro pod** also auto-feeds, so it babysits both water *and* nutrients — freeing you
+to focus on pests, disease, environment, and weather. Neither tier treats
+pests/disease — those always need you.
 
 ---
 
@@ -543,25 +556,41 @@ Base path: `/api/game`. **Reads are public; writes require `X-API-Key`.** The
 authoritative, machine-readable spec is served live at **`/openapi.json`** with a
 Swagger UI at **`/docs`**.
 
-### Players & economy
+### Players, economy & progression
 
 | Method · Path | Purpose |
 |---|---|
 | `POST /players` | Create a player (+500 GROW, returns API key) |
-| `GET /players/<pid>` | Player profile, balance, level |
-| `POST /players/<pid>/daily` | Claim the daily stipend (+50, 22h cooldown) |
+| `GET /players/<pid>` | Player profile |
+| `GET /players/<pid>/wallet` | Current balance |
+| `GET /players/<pid>/level` | XP & level progress |
 | `GET /players/<pid>/ledger` | Audit trail of every GROW movement |
-| `GET /players/<pid>/pods` | List the player's pods *(read-only)* |
-| `GET /players/<pid>/plants` | List the player's plants *(read-only)* |
+| `POST /players/<pid>/daily` | Claim the daily stipend (+50, 22h cooldown) |
+| `GET /players/<pid>/achievements` | Achievement status |
+| `POST /players/<pid>/achievements/<key>/claim` | Claim an earned achievement reward |
+| `GET /leaderboards/<board>` | Rankings (e.g. `richest`, `breeders`, `harvest`, `level`) |
+| `GET /players/<pid>/pods` · `…/plants` · `…/seeds` | List the player's pods / plants / seeds *(read-only)* |
+
+### Strains, favorites & breeding
+
+| Method · Path | Purpose |
+|---|---|
+| `GET /strains` · `GET /strains/<id>` | Browse / inspect the catalog (search & filter) |
+| `GET /players/<pid>/favorites` | List favorited strains |
+| `POST` / `DELETE /players/<pid>/strains/<id>/favorite` | Add / remove a favorite |
+| `POST /players/<pid>/seeds/buy` | Buy seed(s) — body `{strain_id, quantity?}` |
+| `POST /players/<pid>/breed` | Cross two strains — body `{parent_a_id, parent_b_id, name?}` |
+| `POST /players/<pid>/strains/<id>/stabilize` | Selfing/stabilize a line (+0.15 stability) |
 
 ### Pods & planting
 
 | Method · Path | Purpose |
 |---|---|
-| `POST /players/<pid>/pods` | Build a pod (tier: basic/standard/pro) |
+| `POST /players/<pid>/pods` | Build a pod — body `{name, tier?, capacity?}` |
+| `POST /players/<pid>/pods/<pod>/upgrade` | Upgrade a pod's tier — body `{tier}` |
 | `POST /players/<pid>/pods/<pod>/environment` | Set temp/humidity/CO₂/light/pH |
-| `POST /players/<pid>/seeds` | Buy a seed of a strain |
-| `POST /players/<pid>/pods/<pod>/plants` | Plant a seed |
+| `POST /players/<pid>/pods/<pod>/weather` | Roll/apply a weather event on the pod |
+| `POST /players/<pid>/plant` | Plant a seed — body `{seed_id, pod_id}` |
 
 ### The grow loop (simulation)
 
@@ -574,23 +603,36 @@ Swagger UI at **`/docs`**.
 | `POST /players/<pid>/plants/<id>/treat-pests` | Clear pests (bills cost) |
 | `POST /players/<pid>/plants/<id>/treat-disease` | Clear disease (bills cost) |
 
-### Harvest, breed, market
+### Harvest
 
 | Method · Path | Purpose |
 |---|---|
-| `POST /players/<pid>/plants/<id>/harvest` | Harvest (yield ∝ health) |
-| `POST /players/<pid>/harvests/<id>/sell` | Sell to the NPC market |
-| `GET /strains` | Browse the catalog (search/filter/favorites) |
-| `POST /players/<pid>/breed` | Cross two strains → new strain + seed |
-| Market listings & auctions | Create/list/bid/settle fixed-price & auction sales |
-| Contracts | Offer/accept/deliver timed NPC orders |
-| Leaderboards | `GET` richest / breeders / harvests / level |
+| `POST /players/<pid>/plants/<id>/harvest` | Harvest (yield & quality computed server-side from health). Body `{sell?}` — **`sell` defaults to `true`, which sells to the NPC market in the same call.** Set `sell:false` to keep the harvest (e.g. to fill a contract or mint it). |
 
-### On-chain
+> ℹ️ There is **no separate "sell" endpoint** — selling to the NPC market is the
+> default behavior of `harvest`. Keep a harvest (`sell:false`) when you intend to
+> deliver it to a contract, list it on the marketplace, or mint it.
+
+### Marketplace & contracts
+
+| Method · Path | Purpose |
+|---|---|
+| `GET /market` | Browse active listings & auctions |
+| `POST /players/<pid>/market/list` | Create a fixed-price listing (3% listing fee) |
+| `POST /players/<pid>/market/auction` | Create an auction |
+| `POST /players/<pid>/market/<id>/bid` | Place a bid (escrowed; outbids refunded) |
+| `POST /players/<pid>/market/<id>/buy` | Buy a fixed-price listing |
+| `POST /players/<pid>/market/<id>/settle` | Settle an expired auction to the top bidder |
+| `GET /players/<pid>/contracts` | List the player's contracts |
+| `POST /players/<pid>/contracts/offer` | Draw a new contract offer |
+| `POST /players/<pid>/contracts/<id>/fulfill` | Deliver grams to fulfill a contract |
+
+### On-chain (wallet, settlement & NFTs)
 
 | Method · Path | Purpose |
 |---|---|
 | `POST /players/<pid>/wallet/link` | Link an Algorand address |
+| `POST /players/<pid>/wallet/withdraw` · `…/deposit` | Mirror GROW between the ledger and the ASA |
 | `POST /players/<pid>/harvests/<id>/mint` | Mint an eligible harvest NFT |
 | `POST /players/<pid>/strains/<id>/mint` | Mint a stabilized rare strain NFT |
 | `GET /nft/<kind>/<id>.json` | Serve the ARC-3 metadata |

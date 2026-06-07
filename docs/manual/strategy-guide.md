@@ -411,17 +411,21 @@ efficient action in the game. When in doubt, breed.
 
 ## 10 · Pod tier decision
 
-| Tier | Cost | When it pays off |
-|---|---:|---|
-| **Basic** (100) | cheap | Grows 1–2; learning; tight budget |
-| **Standard** (400) | mid | Once you're running consistent grows |
-| **Pro** (1200) | premium | **Auto-water + auto-feed** — buy when you run multiple long grows and can't babysit |
+| Tier | Cost | Automation | When it pays off |
+|---|---:|---|---|
+| **Basic** (100) | cheap | none | Grows 1–2; learning; tight budget |
+| **Standard** (400) | mid | **auto-water** | Once you're running consistent grows and overwatering is your main leak |
+| **Pro** (1200) | premium | **auto-water + auto-feed** | Multiple long grows you can't babysit |
 
-**Pro pod ROI:** it auto-refills water (below 45 → 72) and nutrients (below 40 →
-72), eliminating the overwater/underwater/starve failure modes — the exact
-mistakes that tank quality. For a serious breeder running several 100-day grows in
-parallel, the 1,200 GROW pays for itself in *saved quality* within a couple of
-harvests. It does **not** treat pests/disease — you still watch humidity.
+**The automation ladder matters:** Standard auto-waters but does **not** auto-feed;
+only **Pro** does both. Both auto-refill water (below 45 → 72) and Pro also refills
+nutrients (below 40 → 72), eliminating the overwater/underwater/starve failure
+modes — the exact mistakes that tank quality.
+
+**Pro pod ROI:** for a serious breeder running several 100-day grows in parallel,
+1,200 GROW pays for itself in *saved quality* within a couple of harvests. Neither
+tier treats pests/disease — you still watch humidity. You can also **upgrade** a
+pod in place (paying the price difference) instead of rebuilding.
 
 > 🪐 **Upgrade trigger:** buy a Pro pod once a single high-quality rare/epic
 > harvest (~700+ GROW) covers a meaningful chunk of it and you're tending more

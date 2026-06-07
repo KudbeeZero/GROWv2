@@ -209,12 +209,12 @@ A realistic mid-game day, end to end:
 
 ```
 Claim daily stipend                          +50
-Harvest a rare plant (~120g, q90, THC25)    +~660   (NPC market)
+Harvest a rare plant (~120g, q90, THC25)    +~685   (NPC market)
 Fill one rare contract (60g delivered)      +700
   └─ feeds + treatments during the day       −30
 List a stabilized seed on the marketplace    +200   (−6 listing fee, −10 burn tax)
 ─────────────────────────────────────────────────────
-Net day                                     ≈ +1,564 GROW   (10 GROW burned)
+Net day                                     ≈ +1,589 GROW   (10 GROW burned)
 ```
 
 Scale that across multiple pods and stabilized lines and you see why **production

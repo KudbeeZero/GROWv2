@@ -116,7 +116,7 @@ A pod is the chamber your plant lives in. Start with a **Basic** pod.
 curl -s -X POST http://localhost:10000/api/game/players/$PID/pods \
   -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
   -d '{"tier": "basic", "name": "Orbit One"}'
-# Basic pod costs 100 GROW.  (Standard 400, Pro 1200 — Pro auto-waters & feeds.)
+# Basic pod = 100 GROW. Standard (400) auto-waters; Pro (1200) auto-waters & feeds.
 export POD="<pod_id from the response>"
 ```
 
@@ -127,9 +127,9 @@ export POD="<pod_id from the response>"
 curl -s http://localhost:10000/api/game/strains | head
 
 # Buy a COMMON seed for 25 GROW (rarer seeds cost more — see the Codex)
-curl -s -X POST http://localhost:10000/api/game/players/$PID/seeds \
+curl -s -X POST http://localhost:10000/api/game/players/$PID/seeds/buy \
   -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
-  -d '{"strain_id": "<a common strain id, e.g. Blue Dream>"}'
+  -d '{"strain_id": "<a common strain id, e.g. Blue Dream>", "quantity": 1}'
 export SEED="<seed_id from the response>"
 ```
 
@@ -140,9 +140,9 @@ export SEED="<seed_id from the response>"
 ### 5. Plant the seed
 
 ```bash
-curl -s -X POST http://localhost:10000/api/game/players/$PID/pods/$POD/plants \
+curl -s -X POST http://localhost:10000/api/game/players/$PID/plant \
   -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
-  -d '{"seed_id": "'$SEED'"}'
+  -d '{"seed_id": "'$SEED'", "pod_id": "'$POD'"}'
 export PLANT="<plant_id from the response>"
 ```
 
@@ -177,13 +177,17 @@ curl -s -X POST .../plants/$PLANT/treat-disease -H "X-API-Key: $KEY"
 ### 7. Harvest → sell → get paid
 
 When the plant finishes flowering, harvest it. **Yield and quality scale with the
-health you kept it at** — neglect costs you grams and GROW.
+health you kept it at** — neglect costs you grams and GROW. Harvesting **sells to
+the NPC market in the same call** (`sell` defaults to `true`):
 
 ```bash
-curl -s -X POST .../plants/$PLANT/harvest -H "X-API-Key: $KEY"
-# then sell the harvest to the NPC market
-curl -s -X POST http://localhost:10000/api/game/players/$PID/harvests/<hid>/sell \
+# Harvest AND sell to the NPC market in one call (sell defaults to true)
+curl -s -X POST http://localhost:10000/api/game/players/$PID/plants/$PLANT/harvest \
   -H "X-API-Key: $KEY"
+
+# OR keep the harvest (to fill a contract, list it, or mint it):
+curl -s -X POST http://localhost:10000/api/game/players/$PID/plants/$PLANT/harvest \
+  -H "X-API-Key: $KEY" -H 'Content-Type: application/json' -d '{"sell": false}'
 ```
 
 🎉 **First harvest** unlocks the `first_harvest` achievement (**+100 GROW**).
