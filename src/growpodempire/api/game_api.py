@@ -12,6 +12,7 @@ from ..db.session import session_scope
 from ..services.game_service import GameService, GameError
 from ..services.simulation_service import SimulationService
 from ..services.minting_service import MintingService
+from ..services.settlement_service import SettlementService
 from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
@@ -500,6 +501,34 @@ def link_wallet(player_id):
             payload = S.player_dict(player)
         return jsonify(payload)
     except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/wallet/withdraw")
+@require_player
+def asa_withdraw(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if data.get("amount") is None:
+        return _error("amount is required")
+    try:
+        with session_scope() as s:
+            payload = SettlementService(s).withdraw(player_id, data["amount"])
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/wallet/deposit")
+@require_player
+def asa_deposit(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if data.get("amount") is None:
+        return _error("amount is required")
+    try:
+        with session_scope() as s:
+            payload = SettlementService(s).deposit(player_id, data["amount"])
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
 
 
