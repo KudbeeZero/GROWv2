@@ -115,9 +115,12 @@ separate lint/typecheck/build workflow.
   [`PHASE2_SIMULATION.md`](docs/PHASE2_SIMULATION.md),
   [`PHASE3_ONCHAIN.md`](docs/PHASE3_ONCHAIN.md) — per‑phase deep dives.
 
-Planned next (see the roadmap): a post‑harvest **curing** stage and richer
-**terpene/cannabinoid** genetics, a **research tree** + equipment shop, and an
-AI "Master Grower" advisor that reads a plant's live state and recommends care.
+Recently added: a post‑harvest **curing** stage, richer **terpene/cannabinoid**
+genetics, and an AI **"Master Grower" advisor** (`GET /players/<id>/plants/<id>/advisor`)
+that reads a plant's live state and recommends care. The advisor runs a Claude
+model when `ANTHROPIC_API_KEY` is set and falls back to an offline deterministic
+advisor otherwise, so it works (and tests) with no key. Planned next: a
+**research tree** + equipment shop, and an opt‑in agentic auto‑care mode.
 
 ## License
 

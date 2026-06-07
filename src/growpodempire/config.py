@@ -93,6 +93,17 @@ class Settings:
             os.environ.get("USE_MOCK_CHAIN", "false").lower() == "true"
         )
 
+        # --- AI "Master Grower" advisor (greenfield) -----------------------
+        # The advisor reads a plant's live state and returns diagnosis + care
+        # recommendations. ANTHROPIC_API_KEY is a SECRET (host secret store
+        # only). With no key configured (or USE_MOCK_AI=true), an offline
+        # deterministic mock advisor is used, so the app and tests need no key.
+        self.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+        self.advisor_model: str = os.environ.get("ADVISOR_MODEL", "claude-opus-4-8")
+        self.use_mock_ai: bool = (
+            os.environ.get("USE_MOCK_AI", "false").lower() == "true"
+        )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

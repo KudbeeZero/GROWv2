@@ -421,6 +421,30 @@ def plant_state(player_id, plant_id):
         return _error(str(e), 404)
 
 
+@game_bp.get("/players/<player_id>/plants/<plant_id>/advisor")
+@require_player
+@limiter.limit("20 per minute")
+def plant_advisor(player_id, plant_id):
+    """AI 'Master Grower' diagnosis + care recommendations for a plant.
+
+    Read-only: runs the sim catch-up, then asks the configured advisor provider
+    (real Claude when ANTHROPIC_API_KEY is set, else the offline mock).
+    """
+    from ..services.advisor_service import AdvisorService
+    from ..ai.provider import AdvisorError
+
+    try:
+        with session_scope() as s:
+            advisor = AdvisorService(s)
+            report = advisor.advise(player_id, plant_id)
+            payload = {"provider": advisor.provider.name(), **report.model_dump()}
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+    except AdvisorError as e:
+        return _error(f"Advisor unavailable: {e}", 503)
+
+
 @game_bp.get("/plants/<plant_id>/events")
 def plant_events(plant_id):
     limit = bounded_int(request.args.get("limit"), "limit", default=50, low=1, high=200)

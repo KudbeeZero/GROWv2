@@ -72,6 +72,17 @@ Each entry: branch · what shipped · test count after merge.
   the genome. A strong dominant terpene earns a sale premium (`balance.yaml:harvest_sale.
   terpene_premium_max`). Migration `b3d7c1a9e240` adds the harvest cure/terpene columns.
 
+## AI "Master Grower" advisor (read-only)
+- `claude-expansion-algo-sdk` · A greenfield `ai/` package mirroring `chain/`: an `AdvisorProvider`
+  ABC + Pydantic `AdvisorReport`, an offline deterministic `MockAdvisorProvider`, a real
+  `ClaudeAdvisorProvider` (official `anthropic` SDK, `claude-opus-4-8`, adaptive thinking, structured
+  outputs via `messages.parse`), and a factory that picks mock-vs-real off config. `AdvisorService`
+  runs the sim catch-up, builds a compact plant-state context (state, genome, environment, recent
+  events) and returns diagnosis + care suggestions constrained to the real care actions. New route
+  `GET /players/<id>/plants/<pid>/advisor` (rate-limited). With no `ANTHROPIC_API_KEY` (or
+  `USE_MOCK_AI=true`) the mock advisor is used, so CI needs no key. Makes the README's long-standing
+  "intelligent advisor" claim real.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
