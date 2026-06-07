@@ -23,3 +23,4 @@ Each entry: branch · what shipped · test count after merge.
 
 ### Wave 1 (production hardening) complete: auth, errors, health, CI, docker, OpenAPI.
 - `feature/strain-search-favorites` (merged) · strain search/filter + favorites · 95 tests.
+- `feature/leaderboards` (merged) · richest/breeders/harvests/level rankings · 97 tests.
