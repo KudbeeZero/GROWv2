@@ -39,6 +39,8 @@ breeding:
   base_fee: 75
   # Extra fee scales with the average rarity tier of the two parents.
   rarity_fee_per_tier: 40
+  # Each selfing/stabilize generation raises a line's stability by this much.
+  stabilize_increment: 0.15
 
 # Selling a harvest to the NPC market (a faucet, gated by real grow time).
 harvest_sale:

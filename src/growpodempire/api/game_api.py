@@ -280,6 +280,23 @@ def breed(player_id):
 
 
 # ----- Harvest -----------------------------------------------------------
+@game_bp.post("/players/<player_id>/strains/<strain_id>/stabilize")
+@require_player
+def stabilize_strain(player_id, strain_id):
+    data = request.get_json(force=True, silent=True) or {}
+    rng_seed = data.get("rng_seed")
+    try:
+        with session_scope() as s:
+            strain = GameService(s).stabilize_strain(
+                player_id, strain_id,
+                rng_seed=int(rng_seed) if rng_seed is not None else None,
+            )
+            payload = S.strain_dict(strain)
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
 @game_bp.post("/players/<player_id>/plants/<plant_id>/harvest")
 @require_player
 def harvest(player_id, plant_id):
