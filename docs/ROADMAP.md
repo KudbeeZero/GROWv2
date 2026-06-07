@@ -40,13 +40,14 @@ criteria. "Roles" are functional hats, not headcount.
 - ⬜ **NPC contracts/orders** (deliver N grams by deadline for GROW + XP)
 - **Exit:** a full play-loop (grow → care → harvest → sell/breed/stabilize → mint → trade) via API.
 
-## Sprint 3 — Web frontend, client v1 (Days 29–42) ⬜
+## Sprint 3 — Web frontend, client v1 (Days 29–42) ✅
 **Goal:** players can *see* their grow react in real time.
-- ⬜ React/Next app; wallet connect; auth
-- ⬜ Pod & plant dashboards rendering live `condition_flags` (drooping leaves, bugs, mildew, height,
+- ✅ React/Next app (Next.js 15 App Router + TS + Tailwind + React Query) in `web/`; API-key auth
+- ✅ Pod & plant dashboards rendering live `condition_flags` (drooping leaves, bugs, mildew, height,
   health bars) from `GET /plants/<id>/state`
-- ⬜ Market, breeding lab, strain catalog, leaderboards UIs
-- ⬜ Real-time updates (polling first, websockets later)
+- ✅ Market, breeding lab, strain catalog, leaderboards, contracts, account UIs
+- ✅ Real-time updates via polling (React Query `refetchInterval`; the lazy sim advances on read)
+- ✅ Read-only `GET /players/<id>/pods` and `/plants` endpoints + web CI (lint/typecheck/build)
 - **Exit:** a player completes the full loop in-browser; plant visuals change with sim state.
 
 ## Sprint 4 — Real TestNet + IPFS (Days 43–56) ⬜

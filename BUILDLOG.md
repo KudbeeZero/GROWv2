@@ -36,6 +36,17 @@ Each entry: branch · what shipped · test count after merge.
 
 ### Wave 3 (quality) complete.
 
+## Sprint 3 — Web frontend, client v1
+- `claude/growv2-web-client-sprint3-lNgtu` · Next.js 15 (App Router) + TS + Tailwind + React Query
+  web client in `web/`: onboarding + one-time api-key capture, grow dashboard polling
+  `GET .../plants/<id>/state` with animated `condition_flags` reactions (droop/bugs/mildew/sheen),
+  care + environment + weather controls, strain lab (search/filter/favorites/breed/stabilize/mint),
+  market (fixed-price + auctions) + contracts + leaderboards + account. Plus two read-only backend
+  list endpoints (`GET /players/<id>/pods` and `/plants`) and a path-filtered web CI workflow
+  (lint + typecheck + build) · 125 backend tests.
+
+### Sprint 3 complete: full game loop playable in-browser against the live API.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
