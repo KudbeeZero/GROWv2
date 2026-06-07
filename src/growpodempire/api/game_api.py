@@ -188,6 +188,28 @@ def list_seeds(player_id):
     return jsonify(payload)
 
 
+@game_bp.get("/players/<player_id>/pods")
+def list_pods(player_id):
+    try:
+        with session_scope() as s:
+            pods = GameService(s).list_pods(player_id)
+            payload = [S.pod_dict(p) for p in pods]
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
+@game_bp.get("/players/<player_id>/plants")
+def list_plants(player_id):
+    try:
+        with session_scope() as s:
+            plants = GameService(s).list_plants(player_id)
+            payload = [S.plant_dict(p) for p in plants]
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
 @game_bp.post("/players/<player_id>/seeds/buy")
 @require_player
 def buy_seed(player_id):
