@@ -16,6 +16,7 @@ from ..services.settlement_service import SettlementService
 from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
+from ..services.contract_service import ContractService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
@@ -483,6 +484,42 @@ def claim_achievement(player_id, key):
     try:
         with session_scope() as s:
             payload = ProgressionService(s).claim_achievement(player_id, key)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+# ----- Contracts ---------------------------------------------------------
+@game_bp.get("/players/<player_id>/contracts")
+def list_contracts(player_id):
+    with session_scope() as s:
+        contracts = ContractService(s).list_contracts(player_id, request.args.get("status"))
+        payload = [S.contract_dict(c) for c in contracts]
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/contracts/offer")
+@require_player
+def offer_contract(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    rng_seed = data.get("rng_seed")
+    try:
+        with session_scope() as s:
+            contract = ContractService(s).offer(
+                player_id, rng_seed=int(rng_seed) if rng_seed is not None else None
+            )
+            payload = S.contract_dict(contract)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/contracts/<contract_id>/fulfill")
+@require_player
+def fulfill_contract(player_id, contract_id):
+    try:
+        with session_scope() as s:
+            payload = ContractService(s).fulfill(player_id, contract_id)
         return jsonify(payload), 201
     except GameError as e:
         return _error(str(e))

@@ -323,6 +323,27 @@ class Harvest(UUIDPrimaryKeyMixin, Base):
     nft_status: Mapped[str] = mapped_column(String(16), default="none", nullable=False)
 
 
+class Contract(UUIDPrimaryKeyMixin, Base):
+    """A timed NPC order: deliver target grams of a rarity by a deadline."""
+
+    __tablename__ = "contracts"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_rarity: Mapped[Optional[str]] = mapped_column(String(16))
+    target_grams: Mapped[float] = mapped_column(Float, nullable=False)
+    reward_grow: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
+    reward_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="open", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    deadline_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    fulfilled_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
+    __table_args__ = (Index("ix_contract_player_status", "player_id", "status"),)
+
+
 class MarketListing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "market_listings"
 

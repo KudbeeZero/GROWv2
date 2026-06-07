@@ -177,6 +177,15 @@ leveling:
     breed: 40
     mint: 60
 
+# Timed NPC contracts: deliver target grams of a rarity by a deadline for a
+# GROW + XP reward. Offers are drawn from these weighted templates.
+contracts:
+  duration_days: 7
+  templates:
+    - {rarity: common,   grams: 100, reward: 250, xp: 30, weight: 3}
+    - {rarity: uncommon, grams: 80,  reward: 400, xp: 50, weight: 2}
+    - {rarity: rare,     grams: 60,  reward: 700, xp: 90, weight: 1}
+
 # On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
 # rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.
 chain:

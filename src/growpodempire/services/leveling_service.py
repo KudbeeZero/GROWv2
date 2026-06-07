@@ -30,16 +30,22 @@ def level_for_xp(xp: int, cfg: EconomyConfig) -> int:
     return level
 
 
+def award_xp(session: Session, player_id: str, amount: int, cfg: Optional[EconomyConfig] = None) -> Player:
+    """Add a raw XP amount and recompute the player's level."""
+    cfg = cfg or get_economy_config()
+    player = session.get(Player, player_id)
+    if player is None or amount <= 0:
+        return player
+    player.xp = (player.xp or 0) + int(amount)
+    player.level = level_for_xp(player.xp, cfg)
+    return player
+
+
 def award(session: Session, player_id: str, action: str, cfg: Optional[EconomyConfig] = None) -> Player:
     """Award the configured XP for an action and recompute the player's level."""
     cfg = cfg or get_economy_config()
     amount = int(cfg.raw.get("leveling", {}).get("xp", {}).get(action, 0))
-    player = session.get(Player, player_id)
-    if player is None or amount <= 0:
-        return player
-    player.xp = (player.xp or 0) + amount
-    player.level = level_for_xp(player.xp, cfg)
-    return player
+    return award_xp(session, player_id, amount, cfg)
 
 
 def progress(player: Player, cfg: Optional[EconomyConfig] = None) -> dict:
