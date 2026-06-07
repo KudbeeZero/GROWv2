@@ -60,6 +60,8 @@ def strain_dict(strain) -> dict:
         "parent_b_id": strain.parent_b_id,
         "is_base_catalog": strain.is_base_catalog,
         "genome": strain.genome,
+        "nft_asset_id": strain.nft_asset_id,
+        "nft_status": strain.nft_status,
     }
 
 
@@ -118,6 +120,8 @@ def harvest_dict(harvest) -> dict:
         "sale_value": _money(harvest.sale_value),
         "sold": harvest.sold,
         "harvested_at": _ts(harvest.harvested_at),
+        "nft_asset_id": harvest.nft_asset_id,
+        "nft_status": harvest.nft_status,
     }
 
 

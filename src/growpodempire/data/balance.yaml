@@ -131,3 +131,16 @@ simulation:
   actions:
     water_amount: 35
     feed_amount: 30
+
+# On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
+# rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.
+chain:
+  token:
+    unit_name: GROW
+    asset_name: GrowCoin
+    total: 1000000000000000   # 10^15 base units
+    decimals: 6
+  nft:
+    # Harvests at/above this rarity, or stabilized strains at/above it, can mint.
+    mint_min_rarity: rare
+    strain_min_stability: 0.85

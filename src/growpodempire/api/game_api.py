@@ -11,6 +11,7 @@ from flask import Blueprint, request, jsonify
 from ..db.session import session_scope
 from ..services.game_service import GameService, GameError
 from ..services.simulation_service import SimulationService
+from ..services.minting_service import MintingService
 from ..economy.ledger import InsufficientFundsError
 from . import serialize as S
 
@@ -317,3 +318,51 @@ def buy_listing(player_id, listing_id):
         return jsonify(payload)
     except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
+
+
+# ----- On-chain: wallet linking, NFT minting, metadata -------------------
+@game_bp.post("/players/<player_id>/wallet/link")
+def link_wallet(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if not data.get("address"):
+        return _error("address is required")
+    try:
+        with session_scope() as s:
+            player = GameService(s).link_wallet(player_id, data["address"])
+            payload = S.player_dict(player)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/mint")
+def mint_harvest(player_id, harvest_id):
+    try:
+        with session_scope() as s:
+            harvest = MintingService(s).mint_harvest(player_id, harvest_id)
+            payload = S.harvest_dict(harvest)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/strains/<strain_id>/mint")
+def mint_strain(player_id, strain_id):
+    try:
+        with session_scope() as s:
+            strain = MintingService(s).mint_strain(player_id, strain_id)
+            payload = S.strain_dict(strain)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.get("/nft/<kind>/<obj_id>.json")
+def nft_metadata(kind, obj_id):
+    """Serve ARC-3 metadata JSON referenced by a minted asset's URL."""
+    try:
+        with session_scope() as s:
+            payload = MintingService(s).metadata_for(kind, obj_id)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)

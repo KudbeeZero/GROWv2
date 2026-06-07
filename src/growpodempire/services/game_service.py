@@ -86,6 +86,14 @@ class GameService:
             raise GameError(f"Player {player_id} not found")
         return player
 
+    def link_wallet(self, player_id: str, algorand_address: str) -> Player:
+        """Associate a player with an Algorand address (Phase 3)."""
+        if not algorand_address:
+            raise GameError("algorand_address is required")
+        player = self.get_player(player_id)
+        player.algorand_address = algorand_address
+        return player
+
     def get_wallet(self, player_id: str) -> Wallet:
         wallet = (
             self.session.query(Wallet)

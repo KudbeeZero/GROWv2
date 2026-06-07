@@ -46,6 +46,26 @@ class Settings:
 
         self.sql_echo: bool = os.environ.get("SQL_ECHO", "false").lower() == "true"
 
+        # --- Algorand on-chain layer (Phase 3) -----------------------------
+        # Default to TestNet via AlgoNode. The treasury mnemonic is a SECRET and
+        # must be supplied via the host's secret store, never committed.
+        self.algorand_network: str = os.environ.get("ALGORAND_NETWORK", "testnet")
+        self.algod_url: str = os.environ.get(
+            "ALGOD_URL", "https://testnet-api.algonode.cloud"
+        )
+        self.algod_token: str = os.environ.get("ALGOD_TOKEN", "")
+        self.indexer_url: str = os.environ.get(
+            "INDEXER_URL", "https://testnet-idx.algonode.cloud"
+        )
+        self.algo_treasury_mnemonic = os.environ.get("ALGO_TREASURY_MNEMONIC")
+        asa = os.environ.get("ASA_ID")
+        self.asa_id = int(asa) if asa not in (None, "") else None
+        self.nft_metadata_base_url: str = os.environ.get("NFT_METADATA_BASE_URL", "")
+        # Force the offline mock chain even if a treasury is configured (tests/dev).
+        self.use_mock_chain: bool = (
+            os.environ.get("USE_MOCK_CHAIN", "false").lower() == "true"
+        )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

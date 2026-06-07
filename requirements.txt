@@ -9,6 +9,9 @@ python-dotenv==1.0.0
 PyYAML==6.0.2
 numpy==2.0.3
 pandas==2.3.5
+# Algorand on-chain layer (Phase 3). The app runs without a configured treasury
+# (falls back to an offline mock chain), but this is required to mint on TestNet.
+py-algorand-sdk==2.11.1
 # Postgres driver for production (Render). Local/dev/test default to SQLite and
 # do not require this; safe to skip if the binary wheel is unavailable.
 psycopg2-binary==2.9.9

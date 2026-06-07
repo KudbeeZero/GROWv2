@@ -32,8 +32,8 @@ def create_app(init_database: bool = True):
         """API root endpoint"""
         return jsonify({
             "name": "GrowPodEmpire API",
-            "version": "2.0.0",
-            "description": "Cannabis cultivation game: economy, genetics & on-chain assets",
+            "version": "3.0.0",
+            "description": "Cannabis cultivation game: economy, genetics, real-time sim & on-chain assets",
             "endpoints": {
                 "pods": "/api/pods",
                 "plants": "/api/plants",
