@@ -8,6 +8,7 @@ so balances stay consistent and auditable.
 """
 
 import random
+import secrets
 from decimal import Decimal
 from typing import List, Optional
 
@@ -65,7 +66,9 @@ class GameService:
         if self.session.query(Player).filter(Player.username == username).first():
             raise GameError(f"Username '{username}' already taken")
 
-        player = Player(username=username, email=email)
+        player = Player(
+            username=username, email=email, api_key=secrets.token_urlsafe(32)
+        )
         self.session.add(player)
         self.session.flush()  # assign player.id
 
