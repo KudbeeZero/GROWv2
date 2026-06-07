@@ -12,6 +12,7 @@ from ..db.session import session_scope
 from ..services.game_service import GameService, GameError
 from ..services.simulation_service import SimulationService
 from ..services.minting_service import MintingService
+from ..services.progression_service import ProgressionService
 from ..economy.ledger import InsufficientFundsError
 from . import serialize as S
 
@@ -317,6 +318,34 @@ def buy_listing(player_id, listing_id):
             payload = S.listing_dict(listing)
         return jsonify(payload)
     except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+# ----- Progression: daily stipend & achievements -------------------------
+@game_bp.post("/players/<player_id>/daily")
+def claim_daily(player_id):
+    try:
+        with session_scope() as s:
+            payload = ProgressionService(s).claim_daily(player_id)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.get("/players/<player_id>/achievements")
+def list_achievements(player_id):
+    with session_scope() as s:
+        payload = ProgressionService(s).list_achievements(player_id)
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/achievements/<key>/claim")
+def claim_achievement(player_id, key):
+    try:
+        with session_scope() as s:
+            payload = ProgressionService(s).claim_achievement(player_id, key)
+        return jsonify(payload), 201
+    except GameError as e:
         return _error(str(e))
 
 
