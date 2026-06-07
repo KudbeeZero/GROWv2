@@ -224,6 +224,21 @@ def create_pod(player_id):
         return _error(str(e))
 
 
+@game_bp.post("/players/<player_id>/pods/<pod_id>/upgrade")
+@require_player
+def upgrade_pod(player_id, pod_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if not data.get("tier"):
+        return _error("tier is required")
+    try:
+        with session_scope() as s:
+            pod = GameService(s).upgrade_pod(player_id, pod_id, data["tier"])
+            payload = S.pod_dict(pod)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
 @game_bp.post("/players/<player_id>/plant")
 @require_player
 def plant_seed(player_id):

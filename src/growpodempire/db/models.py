@@ -178,6 +178,9 @@ class GrowPod(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     capacity: Mapped[int] = mapped_column(Integer, default=4, nullable=False)
     tier: Mapped[str] = mapped_column(String(16), default="basic", nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Automation perks (granted by higher tiers): keep resources topped up.
+    auto_water: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    auto_feed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Latest environment snapshot (the 5 sensor params).
     temperature: Mapped[Optional[float]] = mapped_column(Float)
