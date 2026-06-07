@@ -73,6 +73,8 @@ class LedgerEntryType(str, Enum):
     MARKET_FEE = "market_fee"
     BREEDING_FEE = "breeding_fee"
     REWARD = "reward"
+    AUCTION_BID = "auction_bid"
+    AUCTION_REFUND = "auction_refund"
     ASA_WITHDRAWAL = "asa_withdrawal"
     ASA_DEPOSIT = "asa_deposit"
     ADJUSTMENT = "adjustment"

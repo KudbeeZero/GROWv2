@@ -9,6 +9,7 @@ so balances stay consistent and auditable.
 
 import random
 import secrets
+from datetime import timedelta
 from decimal import Decimal
 from typing import List, Optional
 
@@ -643,4 +644,90 @@ class GameService:
 
         listing.status = ListingStatus.SOLD.value
         listing.buyer_id = buyer_id
+        return listing
+
+    # ----- Auctions -------------------------------------------------------
+    def create_seed_auction(
+        self, player_id: str, seed_id: str, quantity: int, min_bid, duration_hours: int = 24
+    ) -> MarketListing:
+        stack = self.session.get(SeedInventory, seed_id)
+        if stack is None or stack.player_id != player_id:
+            raise GameError("Seed not found in player's inventory")
+        if quantity < 1 or stack.quantity < quantity:
+            raise GameError("Not enough seeds to auction")
+        min_bid = to_money(min_bid)
+        if min_bid <= 0:
+            raise GameError("min_bid must be positive")
+
+        stack.quantity -= quantity  # escrow seeds
+        listing = MarketListing(
+            seller_id=player_id,
+            item_type=ListingItemType.SEED.value,
+            item_ref_id=stack.strain_id,
+            quantity=quantity,
+            unit_price=min_bid,
+            is_auction=True,
+            min_bid=min_bid,
+            expires_at=self.clock.now() + timedelta(hours=duration_hours),
+        )
+        self.session.add(listing)
+        self.session.flush()
+        return listing
+
+    def place_bid(self, bidder_id: str, listing_id: str, amount) -> MarketListing:
+        listing = self.session.get(MarketListing, listing_id)
+        if listing is None or not listing.is_auction or listing.status != ListingStatus.ACTIVE.value:
+            raise GameError("Auction not available")
+        if listing.seller_id == bidder_id:
+            raise GameError("Cannot bid on your own auction")
+        if listing.expires_at and self.clock.now() > listing.expires_at:
+            raise GameError("Auction has ended")
+
+        amount = to_money(amount)
+        floor = listing.highest_bid or listing.min_bid
+        if amount <= floor and amount != listing.min_bid:
+            raise GameError(f"Bid must exceed the current bid of {floor}")
+        if amount < listing.min_bid:
+            raise GameError(f"Bid must be at least the minimum {listing.min_bid}")
+
+        # Hold the new bid (refund the previous high bidder first).
+        post(self.session, bidder_id, -amount, LedgerEntryType.AUCTION_BID,
+             ref_type="auction", ref_id=listing_id)
+        if listing.highest_bidder_id and listing.highest_bid:
+            post(self.session, listing.highest_bidder_id, listing.highest_bid,
+                 LedgerEntryType.AUCTION_REFUND, ref_type="auction", ref_id=listing_id)
+
+        listing.highest_bid = amount
+        listing.highest_bidder_id = bidder_id
+        return listing
+
+    def settle_auction(self, player_id: str, listing_id: str) -> MarketListing:
+        listing = self.session.get(MarketListing, listing_id)
+        if listing is None or not listing.is_auction:
+            raise GameError("Auction not found")
+        if listing.seller_id != player_id:
+            raise GameError("Only the seller can settle this auction")
+        if listing.status != ListingStatus.ACTIVE.value:
+            raise GameError(f"Auction already {listing.status}")
+        if listing.expires_at and self.clock.now() < listing.expires_at:
+            raise GameError("Auction has not ended yet")
+
+        if listing.highest_bidder_id:
+            tax = to_money(listing.highest_bid * Decimal(str(self.cfg.market["sale_tax_pct"])))
+            seller_proceeds = to_money(listing.highest_bid - tax)  # tax burned
+            post(self.session, listing.seller_id, seller_proceeds,
+                 LedgerEntryType.MARKET_SALE, ref_type="auction", ref_id=listing_id)
+            stack = self._get_or_create_seed_stack(
+                listing.highest_bidder_id, listing.item_ref_id, SeedSource.MARKET
+            )
+            stack.quantity += listing.quantity
+            listing.status = ListingStatus.SOLD.value
+            listing.buyer_id = listing.highest_bidder_id
+        else:
+            # No bids: return the escrowed seeds to the seller.
+            stack = self._get_or_create_seed_stack(
+                listing.seller_id, listing.item_ref_id, SeedSource.MARKET
+            )
+            stack.quantity += listing.quantity
+            listing.status = ListingStatus.EXPIRED.value
         return listing
