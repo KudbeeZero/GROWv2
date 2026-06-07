@@ -19,26 +19,30 @@ criteria. "Roles" are functional hats, not headcount.
 
 ---
 
-## Sprint 1 — Harden the core (Days 1–14) 🔨
+## Sprint 1 — Harden the core (Days 1–14) ✅
 **Goal:** the backend is safe to expose publicly.
-- 🔨 Per-player **API-key auth** on write endpoints (reads stay public)
-- ⬜ Uniform **error envelope** + global 400/404/405/500 handlers + input validation
-- ⬜ **Health/readiness** probes, structured logging w/ request IDs, request timing
-- ⬜ **CI** (GitHub Actions): lint + pytest + `alembic upgrade head` on every PR
-- ⬜ **Docker** + docker-compose (api + Postgres); gunicorn in prod
-- ⬜ **OpenAPI 3** spec at `/openapi.json` + Swagger UI at `/docs`
-- **Exit:** CI green on PRs; image boots against Postgres; `/docs` lists every route; auth enforced.
+- ✅ Per-player **API-key auth** on write endpoints (reads stay public)
+- ✅ Uniform **error envelope** + global 400/404/405/500 handlers + input validation
+- ✅ **Health/readiness** probes, structured logging w/ request IDs, request timing
+- ✅ **CI** (GitHub Actions): lint + pytest + `alembic upgrade head` on every PR
+- ✅ **Docker** + docker-compose (api + Postgres); gunicorn in prod
+- ✅ **OpenAPI 3** spec at `/openapi.json` + Swagger UI at `/docs`
+- **Exit:** CI green on PRs; image boots against Postgres; `/docs` lists every route; auth enforced. ✅
 
-## Sprint 2 — Gameplay depth (Days 15–28) ⬜
+## Sprint 2 — Gameplay depth (Days 15–28) ✅
 **Goal:** the game is fun to play through an API/CLI.
-- ⬜ Strain **search/filter** + favorites
-- ⬜ **Leaderboards** (richest, top breeders, biggest harvest, highest level)
-- ⬜ **Market auctions** (bids, expiry, highest-bidder settlement)
-- ⬜ **Weather events** feeding the sim (heatwave, humidity spike, cold snap)
-- ⬜ **Pod automation** (tiers grant auto-water/feed)
-- ⬜ **Strain stabilization** (selfing/backcross → unlock NFT mint)
-- ⬜ **NPC contracts/orders** (deliver N grams by deadline for GROW + XP)
-- **Exit:** a full play-loop (grow → care → harvest → sell/breed/stabilize → mint → trade) via API.
+- ✅ Strain **search/filter** + favorites
+- ✅ **Leaderboards** (richest, top breeders, biggest harvest, highest level)
+- ✅ **Market auctions** (bids, expiry, highest-bidder settlement)
+- ✅ **Weather events** feeding the sim (heatwave, humidity spike, cold snap)
+- ✅ **Pod automation** (tiers grant auto-water/feed)
+- ✅ **Strain stabilization** (selfing/backcross → unlock NFT mint)
+- ✅ **NPC contracts/orders** (deliver N grams by deadline for GROW + XP)
+- **Exit:** a full play-loop (grow → care → harvest → sell/breed/stabilize → mint → trade) via API. ✅
+
+> Beyond the original plan, also shipped: post-harvest **curing** + **terpene genetics**, a
+> **research tree** + **consumables shop** + seasonal-strain gating, and an **AI "Master Grower"**
+> (read-only advisor → guarded agentic auto-care). See `BUILDLOG.md` and `docs/memory/`.
 
 ## Sprint 3 — Web frontend, client v1 (Days 29–42) ✅
 **Goal:** players can *see* their grow react in real time.

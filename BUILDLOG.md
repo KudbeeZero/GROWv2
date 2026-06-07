@@ -1,7 +1,9 @@
 # Build Log
 
-Chronological record of what shipped on the trunk
-(`claude/cannabis-game-lut-economics-utfiK`). Newest at the bottom of each section.
+Chronological record of what shipped on the trunk (`main`). Newest at the bottom of each section.
+
+> Day-to-day status, priorities and the daily LUT round-table reports live in `docs/memory/`
+> (start at `CLAUDE.md` → `docs/memory/README.md`). This file stays a flat shipping log.
 
 ## Phases (foundation)
 - **Phase 1** — Persistent DB, ledger economy, strain genetics & crossbreeding.
