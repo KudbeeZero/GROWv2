@@ -17,6 +17,7 @@ from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
 from ..services.contract_service import ContractService
+from ..services.research_service import ResearchService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
@@ -401,6 +402,70 @@ def sell_harvest(player_id, harvest_id):
             payload = S.harvest_dict(h)
         return jsonify(payload)
     except GameError as e:
+        return _error(str(e))
+
+
+# ----- Research tree & shop ----------------------------------------------
+@game_bp.get("/players/<player_id>/research")
+@require_player
+def research_tree(player_id):
+    with session_scope() as s:
+        tree = ResearchService(s).list_tree(player_id)
+    return jsonify(tree)
+
+
+@game_bp.post("/players/<player_id>/research/<node_key>/unlock")
+@require_player
+def research_unlock(player_id, node_key):
+    try:
+        with session_scope() as s:
+            svc = ResearchService(s)
+            svc.unlock(player_id, node_key)
+            tree = svc.list_tree(player_id)
+        return jsonify(tree), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.get("/players/<player_id>/shop")
+@require_player
+def shop_list(player_id):
+    with session_scope() as s:
+        items = GameService(s).list_consumables(player_id)
+    return jsonify(items)
+
+
+@game_bp.post("/players/<player_id>/shop/buy")
+@require_player
+def shop_buy(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    item_key = data.get("item_key")
+    if not item_key:
+        return _error("item_key is required")
+    qty = bounded_int(data.get("quantity", 1), "quantity", default=1, low=1, high=99)
+    try:
+        with session_scope() as s:
+            svc = GameService(s)
+            svc.buy_consumable(player_id, item_key, qty)
+            items = svc.list_consumables(player_id)
+        return jsonify(items), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/apply")
+@require_player
+def apply_consumable(player_id, plant_id):
+    data = request.get_json(force=True, silent=True) or {}
+    item_key = data.get("item_key")
+    if not item_key:
+        return _error("item_key is required")
+    try:
+        with session_scope() as s:
+            plant = SimulationService(s).apply_consumable(player_id, plant_id, item_key)
+            payload = S.plant_dict(plant)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
 
 

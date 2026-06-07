@@ -46,6 +46,7 @@ def _build_strain_kwargs(entry: Dict) -> Dict:
         "slug": slugify(entry["name"]),
         "lineage_type": lineage,
         "rarity": rarity,
+        "season": entry.get("season", "all"),
         "terpenes": entry.get("terpenes", []),
         "genome": genome,
         "stability": stability,

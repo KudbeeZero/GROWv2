@@ -119,8 +119,11 @@ Recently added: a post‑harvest **curing** stage, richer **terpene/cannabinoid*
 genetics, and an AI **"Master Grower" advisor** (`GET /players/<id>/plants/<id>/advisor`)
 that reads a plant's live state and recommends care. The advisor runs a Claude
 model when `ANTHROPIC_API_KEY` is set and falls back to an offline deterministic
-advisor otherwise, so it works (and tests) with no key. Planned next: a
-**research tree** + equipment shop, and an opt‑in agentic auto‑care mode.
+advisor otherwise, so it works (and tests) with no key. There's also a
+**research tree** (15 upgrades across 5 branches that boost yield, quality,
+curing, and cut costs), a **consumables shop**, and **seasonal strains**.
+Planned next: an opt‑in **agentic auto‑care** mode where the advisor calls the
+care endpoints itself within a spend cap.
 
 ## License
 

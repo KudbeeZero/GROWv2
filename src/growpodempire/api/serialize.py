@@ -55,6 +55,7 @@ def strain_dict(strain) -> dict:
         "flowering_days": [strain.flowering_days_min, strain.flowering_days_max],
         "yield_range": [strain.yield_min, strain.yield_max],
         "difficulty": strain.difficulty,
+        "season": getattr(strain, "season", "all"),
         "terpenes": strain.terpenes,
         "stability": strain.stability,
         "generation": strain.generation,

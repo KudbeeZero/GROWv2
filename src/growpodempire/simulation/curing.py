@@ -32,11 +32,15 @@ def cure_progress(
     target_hours: float,
     now: datetime,
     cfg: EconomyConfig,
+    bonus_scale: float = 1.0,
 ) -> CureResult:
-    """Quality after curing `base_quality` buds from `started_at` to `now`."""
+    """Quality after curing `base_quality` buds from `started_at` to `now`.
+
+    `bonus_scale` (>= 1.0) lets research-tree upgrades amplify the cure bonus.
+    """
     c = cfg.curing
     optimal = float(c.get("optimal_hours", 72))
-    max_bonus = float(c.get("max_quality_bonus", 10.0))
+    max_bonus = float(c.get("max_quality_bonus", 10.0)) * max(1.0, bonus_scale)
     penalty_per_hour = float(c.get("over_dry_penalty_per_hour", 0.04))
     grace = float(c.get("over_dry_grace_hours", 48))
 

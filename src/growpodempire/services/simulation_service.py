@@ -7,14 +7,17 @@ applies its effect and logs an event. Costed actions go through the economy
 ledger.
 """
 
+from decimal import Decimal
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
 from ..economy.config import get_economy_config, EconomyConfig
-from ..economy.ledger import post
+from ..economy.ledger import post, to_money
 from ..enums import LedgerEntryType
-from ..db.models import Plant, GrowPod, PlantEvent, EnvironmentReading
+from ..db.models import (
+    Plant, GrowPod, PlantEvent, EnvironmentReading, ConsumableInventory,
+)
 from ..simulation import engine
 from ..simulation.clock import Clock, SystemClock
 from .game_service import GameError
@@ -40,6 +43,15 @@ class SimulationService:
         if plant is None or plant.player_id != player_id:
             raise GameError("Plant not found")
         return plant
+
+    def _research(self, player_id: str) -> dict:
+        from .research_service import research_effects
+        return research_effects(self.session, player_id, self.cfg)
+
+    def _care_cost(self, player_id: str, base) -> Decimal:
+        """A care cost after applying any care-discount research."""
+        disc = min(0.9, self._research(player_id).get("care_discount_pct", 0.0))
+        return to_money(Decimal(str(base)) * Decimal(str(1.0 - disc)))
 
     def sync(self, plant: Plant) -> List[PlantEvent]:
         """Advance the plant to the current time."""
@@ -74,7 +86,7 @@ class SimulationService:
         self._require_living(plant)
         self.sync(plant)
         post(
-            self.session, player_id, -self.cfg.nutrients_cost,
+            self.session, player_id, -self._care_cost(player_id, self.cfg.nutrients_cost),
             LedgerEntryType.NUTRIENT_PURCHASE, ref_type="plant", ref_id=plant_id,
         )
         amount = amount if amount is not None else self._sim.get("actions", {}).get("feed_amount", 30)
@@ -87,7 +99,7 @@ class SimulationService:
         self._require_living(plant)
         self.sync(plant)
         post(
-            self.session, player_id, -self.cfg.pest_treatment_cost,
+            self.session, player_id, -self._care_cost(player_id, self.cfg.pest_treatment_cost),
             LedgerEntryType.PEST_TREATMENT, ref_type="plant", ref_id=plant_id,
         )
         cleared = plant.pest_level
@@ -101,13 +113,61 @@ class SimulationService:
         self._require_living(plant)
         self.sync(plant)
         post(
-            self.session, player_id, -self.cfg.disease_treatment_cost,
+            self.session, player_id, -self._care_cost(player_id, self.cfg.disease_treatment_cost),
             LedgerEntryType.DISEASE_TREATMENT, ref_type="plant", ref_id=plant_id,
         )
         cleared = plant.disease_level
         plant.disease_level = 0.0
         plant.condition_flags = engine.reactions.compute_conditions(plant, self._sim)
         self._log(plant, "disease_treated", payload={"cleared": cleared})
+        return plant
+
+    def apply_consumable(self, player_id: str, plant_id: str, item_key: str) -> Plant:
+        """Use one shop consumable on a plant, applying its effect to the plant's
+        simulated levels (so it flows through the normal yield/quality math)."""
+        item = self.cfg.shop_consumables.get(item_key)
+        if item is None:
+            raise GameError(f"Unknown consumable '{item_key}'")
+
+        plant = self._get_plant(player_id, plant_id)
+        self._require_living(plant)
+
+        stage_req = item.get("stage_req")
+        if stage_req and plant.growth_stage != stage_req:
+            raise GameError(f"{item.get('name', item_key)} can only be used during {stage_req}")
+
+        stack = (
+            self.session.query(ConsumableInventory)
+            .filter(
+                ConsumableInventory.player_id == player_id,
+                ConsumableInventory.item_key == item_key,
+            )
+            .one_or_none()
+        )
+        if stack is None or stack.quantity < 1:
+            raise GameError("You don't own this consumable")
+
+        self.sync(plant)
+        effects = item.get("effects", {})
+        potency = 1.0 + self._research(player_id).get("consumable_potency_pct", 0.0)
+
+        def _clamp(v):
+            return max(0.0, min(100.0, v))
+
+        if "water_set" in effects:
+            plant.water_level = _clamp(float(effects["water_set"]))
+        if "nutrient_set" in effects:
+            plant.nutrient_level = _clamp(float(effects["nutrient_set"]))
+        if "pest_set" in effects:
+            plant.pest_level = _clamp(float(effects["pest_set"]))
+        if "disease_set" in effects:
+            plant.disease_level = _clamp(float(effects["disease_set"]))
+        if "health_add" in effects:
+            plant.health = _clamp(plant.health + float(effects["health_add"]) * potency)
+
+        stack.quantity -= 1
+        plant.condition_flags = engine.reactions.compute_conditions(plant, self._sim)
+        self._log(plant, "consumable_applied", payload={"item": item_key})
         return plant
 
     def set_environment(

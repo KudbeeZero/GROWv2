@@ -116,6 +116,9 @@ class Strain(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     yield_max: Mapped[float] = mapped_column(Float, nullable=False)
     difficulty: Mapped[int] = mapped_column(Integer, nullable=False)  # 1..5
     terpenes: Mapped[Optional[list]] = mapped_column(JSON, default=list)
+    # Availability window: "all" (always), or a season key (spring/summer/fall/
+    # winter) / "limited" for event-gated strains. See balance.yaml:events.
+    season: Mapped[str] = mapped_column(String(16), default="all", nullable=False)
 
     # Canonical trait vector consumed by the genetics engine.
     genome: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
@@ -167,6 +170,36 @@ class SeedInventory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __table_args__ = (
         Index("ix_seed_player_strain", "player_id", "strain_id"),
+    )
+
+
+class ResearchProgress(UUIDPrimaryKeyMixin, Base):
+    """A research-tree node a player has unlocked (Phase 2 expansion)."""
+
+    __tablename__ = "research_progress"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    node_key: Mapped[str] = mapped_column(String(48), nullable=False)
+    unlocked_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_research_player_node", "player_id", "node_key", unique=True),
+    )
+
+
+class ConsumableInventory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A stack of a shop consumable owned by a player (Phase 2 expansion)."""
+
+    __tablename__ = "consumable_inventory"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    item_key: Mapped[str] = mapped_column(String(48), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    __table_args__ = (
+        Index("ix_consumable_player_item", "player_id", "item_key", unique=True),
     )
 
 

@@ -45,6 +45,7 @@ from ..db.models import (
     Harvest,
     MarketListing,
     LedgerEntry,
+    ConsumableInventory,
 )
 from ..db.seed import slugify
 
@@ -63,6 +64,12 @@ class GameService:
         self.session = session
         self.cfg = config or get_economy_config()
         self.clock = clock or SystemClock()
+
+    def _research(self, player_id: str) -> dict:
+        """Aggregated research-tree effects for a player (lazy import avoids a
+        circular dependency with research_service)."""
+        from .research_service import research_effects
+        return research_effects(self.session, player_id, self.cfg)
 
     # ----- Players & wallets ---------------------------------------------
     def create_player(self, username: str, email: Optional[str] = None) -> Player:
@@ -157,6 +164,17 @@ class GameService:
             raise GameError(f"Strain {strain_id} not found")
         return strain
 
+    def season_available(self, strain: Strain) -> bool:
+        """Whether a strain can currently be bought given the active season.
+
+        Always-on strains (season "all") and any strain when no season is active
+        (current_season "all") are available; otherwise the strain's season must
+        match the active one. "limited" strains require a matching event.
+        """
+        season = getattr(strain, "season", "all") or "all"
+        current = self.cfg.current_season
+        return season == "all" or current == "all" or season == current
+
     # ----- Favorites ------------------------------------------------------
     def add_favorite(self, player_id: str, strain_id: str) -> StrainFavorite:
         self.get_player(player_id)
@@ -220,9 +238,12 @@ class GameService:
         if quantity < 1:
             raise GameError("quantity must be >= 1")
         strain = self.get_strain(strain_id)
+        if not self.season_available(strain):
+            raise GameError(f"{strain.name} is not available this season")
 
         unit = pricing.seed_price(strain.rarity, self.cfg)
-        total = to_money(unit * quantity)
+        discount = min(0.9, self._research(player_id).get("seed_discount_pct", 0.0))
+        total = to_money(unit * quantity * Decimal(str(1.0 - discount)))
         post(
             self.session,
             player_id,
@@ -260,6 +281,57 @@ class GameService:
             self.session.flush()
         return stack
 
+    # ----- Shop (consumables) ---------------------------------------------
+    def list_consumables(self, player_id: str) -> List[dict]:
+        self.get_player(player_id)
+        owned = {
+            r.item_key: r.quantity
+            for r in self.session.query(ConsumableInventory).filter(
+                ConsumableInventory.player_id == player_id
+            )
+        }
+        out = []
+        for key, item in self.cfg.shop_consumables.items():
+            out.append({
+                "key": key,
+                "name": item.get("name", key),
+                "cost": float(item.get("cost", 0)),
+                "description": item.get("description", ""),
+                "stage_req": item.get("stage_req"),
+                "owned": owned.get(key, 0),
+            })
+        return out
+
+    def buy_consumable(
+        self, player_id: str, item_key: str, quantity: int = 1
+    ) -> ConsumableInventory:
+        if quantity < 1:
+            raise GameError("quantity must be >= 1")
+        self.get_player(player_id)
+        item = self.cfg.shop_consumables.get(item_key)
+        if item is None:
+            raise GameError(f"Unknown consumable '{item_key}'")
+
+        cost = to_money(Decimal(str(item.get("cost", 0))) * quantity)
+        post(
+            self.session, player_id, -cost, LedgerEntryType.SHOP_PURCHASE,
+            ref_type="consumable", ref_id=item_key,
+        )
+        stack = (
+            self.session.query(ConsumableInventory)
+            .filter(
+                ConsumableInventory.player_id == player_id,
+                ConsumableInventory.item_key == item_key,
+            )
+            .one_or_none()
+        )
+        if stack is None:
+            stack = ConsumableInventory(player_id=player_id, item_key=item_key, quantity=0)
+            self.session.add(stack)
+            self.session.flush()
+        stack.quantity += quantity
+        return stack
+
     # ----- Pods & planting ------------------------------------------------
     def create_pod(
         self,
@@ -281,8 +353,9 @@ class GameService:
                 ref_id=tier,
             )
         auto_water, auto_feed = self._tier_automation(tier)
+        capacity_bonus = int(self._research(player_id).get("pod_capacity_bonus", 0))
         pod = GrowPod(
-            player_id=player_id, name=name, capacity=capacity, tier=tier,
+            player_id=player_id, name=name, capacity=capacity + capacity_bonus, tier=tier,
             auto_water=auto_water, auto_feed=auto_feed,
         )
         self.session.add(pod)
@@ -366,6 +439,8 @@ class GameService:
         parent_b = self.get_strain(parent_b_id)
 
         fee = pricing.breeding_fee(parent_a.rarity, parent_b.rarity, self.cfg)
+        disc = min(0.9, self._research(player_id).get("breeding_discount_pct", 0.0))
+        fee = to_money(fee * Decimal(str(1.0 - disc)))
         post(
             self.session,
             player_id,
@@ -462,6 +537,8 @@ class GameService:
             raise GameError("You need a seed of this strain to stabilize it")
 
         fee = pricing.breeding_fee(parent.rarity, parent.rarity, self.cfg)
+        disc = min(0.9, self._research(player_id).get("breeding_discount_pct", 0.0))
+        fee = to_money(fee * Decimal(str(1.0 - disc)))
         post(self.session, player_id, -fee, LedgerEntryType.BREEDING_FEE, ref_type="stabilize")
         stack.quantity -= 1
 
@@ -532,6 +609,7 @@ class GameService:
         engine.catch_up(self.session, plant, self.clock.now(), self.cfg)
 
         strain = self.get_strain(plant.strain_id)
+        fx = self._research(player_id)  # research-tree modifiers
 
         # Yield scales with health; quality is the plant's health at harvest.
         if quality is None:
@@ -540,11 +618,18 @@ class GameService:
             midpoint = (strain.yield_min + strain.yield_max) / 2.0
             weight_g = round(midpoint * (0.4 + 0.6 * plant.health / 100.0), 1)
 
+        # Research: yield multiplier + flat quality bonus (capped).
+        weight_g = round(weight_g * (1.0 + fx.get("yield_pct", 0.0)), 1)
+        q_cap = float(self.cfg.research.get("max_quality", 100))
+        quality = max(0.0, min(q_cap, quality + fx.get("quality_bonus", 0.0)))
+
         thc_actual = (strain.thc_min + strain.thc_max) / 2.0
         cbd_actual = (strain.cbd_min + strain.cbd_max) / 2.0
 
-        # Terpene expression scales with how well the plant was grown.
+        # Terpene expression scales with how well the plant was grown, plus any
+        # terpene-boosting research.
         vigor_factor = 0.85 + 0.15 * max(0.0, min(100.0, plant.health)) / 100.0
+        vigor_factor *= 1.0 + fx.get("terpene_pct", 0.0)
         terpenes = express_terpenes(plant.genome, vigor_factor)
 
         plant.harvested = True
@@ -653,12 +738,14 @@ class GameService:
         if harvest.cure_status != "curing":
             raise GameError("This harvest is not curing")
 
+        cure_scale = 1.0 + self._research(player_id).get("cure_bonus_pct", 0.0)
         result = curing.cure_progress(
             harvest.base_quality if harvest.base_quality is not None else harvest.quality,
             harvest.cure_started_at,
             harvest.cure_target_hours or 0.0,
             self.clock.now(),
             self.cfg,
+            bonus_scale=cure_scale,
         )
         if not result.done:
             raise GameError(

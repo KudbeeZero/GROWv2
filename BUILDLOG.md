@@ -83,6 +83,22 @@ Each entry: branch · what shipped · test count after merge.
   `USE_MOCK_AI=true`) the mock advisor is used, so CI needs no key. Makes the README's long-standing
   "intelligent advisor" claim real.
 
+## Expansion Wave B — research tree, shop, seasons
+- `claude/game-expansion-algo-sdk` · **Research tree**: a 15-node, 5-branch (cultivation/horticulture/
+  defense/genetics/operations) data-driven tech tree in `balance.yaml`. `ResearchService` gates
+  unlocks by GROW cost + player level + prerequisites; `research_effects()` aggregates unlocked-node
+  effects into one additive modifier dict consumed by player-scoped logic (harvest yield/quality,
+  curing bonus, care/seed/breeding discounts, pod capacity, terpene expression, consumable potency) —
+  the pure sim engine is never touched. Routes: `GET /players/<id>/research`,
+  `POST .../research/<node>/unlock`.
+- **Consumables shop**: GROW-sink boosters (`cal_mag_boost`, `ladybugs`, `neem_oil`, `bloom_booster`,
+  `rejuvenation_tonic`) that manipulate a plant's existing sim levels (so they flow through normal
+  yield/quality math). Routes: `GET /players/<id>/shop`, `POST .../shop/buy`,
+  `POST .../plants/<pid>/apply`. Care-action costs now honour the care-discount research.
+- **Seasonal strains**: a `season` column + `events.current_season` gate `buy_seed` (default "all" =
+  always available, so nothing changes until LiveOps rotates the season).
+- Migration `c7e2f4a16b80` adds `research_progress`, `consumable_inventory`, and `strains.season`.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
