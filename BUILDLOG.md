@@ -18,3 +18,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/error-handling-validation` (merged) · uniform JSON error envelope + 1 MiB body cap · 87 tests.
 - `feature/health-observability` (merged) · /health + /readiness probes, request-id access logs · 90 tests.
 - `feature/ci-github-actions` (merged) · CI: lint + migrations + seed + pytest on push/PR · 90 tests.
+- `feature/dockerize` (merged) · Dockerfile + compose (Postgres) + gunicorn server · 90 tests.
