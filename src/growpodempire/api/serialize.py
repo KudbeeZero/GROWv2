@@ -153,6 +153,20 @@ def event_dict(event) -> dict:
     }
 
 
+def contract_dict(contract) -> dict:
+    return {
+        "id": contract.id,
+        "description": contract.description,
+        "target_rarity": contract.target_rarity,
+        "target_grams": contract.target_grams,
+        "reward_grow": _money(contract.reward_grow),
+        "reward_xp": contract.reward_xp,
+        "status": contract.status,
+        "deadline_at": _ts(contract.deadline_at),
+        "fulfilled_at": _ts(contract.fulfilled_at),
+    }
+
+
 def ledger_dict(entry) -> dict:
     return {
         "id": entry.id,
