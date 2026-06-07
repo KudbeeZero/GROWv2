@@ -1,0 +1,200 @@
+# GrowPodEmpire economy tuning. ALL economic constants live here so balance can
+# be adjusted without code changes. Values are in the in-game currency (GROW),
+# which later maps 1:1 to an Algorand ASA (decimals = 6).
+
+currency:
+  name: GROW
+  symbol: GC
+  decimals: 6
+
+# One-time grant credited when a player account is created (a faucet).
+starting_balance: 500
+# Small, fixed login bonus (retention faucet, intentionally not a wealth pump).
+daily_stipend: 50
+
+seeds:
+  base_cost: 25            # price of a COMMON seed
+  rarity_multiplier:
+    common: 1.0
+    uncommon: 2.5
+    rare: 6.0
+    epic: 15.0
+    legendary: 40.0
+
+nutrients:
+  per_application: 5
+
+pest_treatment:
+  per_application: 15
+
+disease_treatment:
+  per_application: 20
+
+pods:
+  basic: 100
+  standard: 400
+  pro: 1200
+
+breeding:
+  base_fee: 75
+  # Extra fee scales with the average rarity tier of the two parents.
+  rarity_fee_per_tier: 40
+  # Each selfing/stabilize generation raises a line's stability by this much.
+  stabilize_increment: 0.15
+
+# Selling a harvest to the NPC market (a faucet, gated by real grow time).
+harvest_sale:
+  base_price_per_gram: 2.0
+  quality_curve_exponent: 1.5     # rewards high quality non-linearly
+  rarity_multiplier:
+    common: 1.0
+    uncommon: 1.4
+    rare: 2.2
+    epic: 4.0
+    legendary: 8.0
+  thc_bonus_per_pct_over_15: 0.04  # +4% value per THC point above 15%
+  # Diminishing returns: grams above the soft cap are worth less per gram.
+  soft_cap_grams: 120
+  soft_cap_factor: 0.6
+
+# Player-to-player marketplace. Fees/taxes are GROW sinks (burned) to fight
+# inflation.
+market:
+  listing_fee_pct: 0.03   # charged to the seller at listing time
+  sale_tax_pct: 0.05      # withheld from the seller's proceeds on a sale
+
+# Real-time grow simulation (Phase 2). The engine advances a plant in fixed
+# 1-hour steps from its last_tick_at to "now" (compute-on-read catch-up), so
+# correctness never depends on a background process being alive.
+simulation:
+  max_catchup_hours: 8760   # 1-year safety cap on a single catch-up
+
+  resource_decay:
+    water_per_hour: 1.5     # how fast the medium dries out
+    nutrient_per_hour: 1.0
+
+  water:
+    optimal_low: 40
+    optimal_high: 78
+    overwater_threshold: 88   # sustained above -> overwatered / root rot
+    rot_threshold: 96
+    underwater_threshold: 15  # below -> wilting
+
+  nutrient:
+    optimal_low: 35
+    optimal_high: 82
+    burn_threshold: 95
+    deficient_threshold: 20
+
+  # Pod environment optimal bands; deviations sap health.
+  environment:
+    temperature: [20, 28]
+    humidity: [40, 60]
+    ph_level: [6.0, 7.0]
+    # Assumed when a pod has no sensor snapshot yet (kept optimal = no penalty).
+    defaults:
+      temperature: 24
+      humidity: 50
+      ph_level: 6.5
+
+  pests:
+    base_spawn_chance_per_hour: 0.012
+    humidity_high: 62                 # damp air invites pests
+    humidity_spawn_bonus: 0.03
+    growth_per_hour: 1.6              # infestation worsens until treated
+
+  disease:
+    humidity_threshold: 64            # mildew sets in above this humidity
+    growth_per_hour: 1.3
+
+  health:
+    drift_rate: 0.12                  # fraction of (target-health) closed per hour
+    death_threshold: 1.0              # at/below this health the plant dies
+    water_stress_weight: 0.6
+    nutrient_stress_weight: 0.5
+    env_stress_weight: 0.5
+    pest_weight: 0.45                 # health target penalty per pest_level point
+    disease_weight: 0.55
+
+  # Stage durations in days (flowering comes from the strain's genome).
+  stages:
+    seed_days: 3
+    germination_days: 5
+    seedling_days: 10
+    vegetative_days: 26
+
+  # Height gain (cm/day) at full health, by stage.
+  growth:
+    seedling_cm_per_day: 0.6
+    vegetative_cm_per_day: 2.2
+    flowering_cm_per_day: 0.5
+
+  # How much a player action moves a level.
+  actions:
+    water_amount: 35
+    feed_amount: 30
+
+  # Pod automation (higher tiers): top resources up when they run low.
+  automation:
+    water_refill_below: 45
+    water_refill_to: 72
+    nutrient_refill_below: 40
+    nutrient_refill_to: 72
+
+  # Random weather events that shift a pod's environment (then feed the sim).
+  # Deltas are applied to the current snapshot; `set_*` overrides absolutely.
+  weather:
+    events:
+      heatwave:       {weight: 2, temperature: 7,  humidity: -12}
+      cold_snap:      {weight: 2, temperature: -7, humidity: 6}
+      humidity_spike: {weight: 2, humidity: 20}
+      dry_spell:      {weight: 2, humidity: -20}
+      ideal:          {weight: 1, set_temperature: 24, set_humidity: 50, set_ph_level: 6.5}
+    clamps:
+      temperature: [10, 40]
+      humidity: [10, 95]
+      co2_level: [300, 2000]
+      light_intensity: [0, 1000]
+      ph_level: [4.0, 9.0]
+
+# Retention loop: a once-per-24h login stipend and one-time achievement rewards.
+progression:
+  daily_cooldown_hours: 22       # claim window (slightly under 24h is forgiving)
+  achievements:
+    first_harvest: {reward: 100, description: "Harvest your first plant"}
+    first_breed: {reward: 150, description: "Breed a new strain"}
+    first_nft: {reward: 250, description: "Mint your first NFT"}
+    green_thumb: {reward: 300, threshold: 5, description: "Complete 5 harvests"}
+    master_breeder: {reward: 500, threshold: 5, description: "Breed 5 strains"}
+    high_roller: {reward: 400, threshold: 2000, description: "Hold 2000 GROW"}
+
+# Player progression. XP is awarded for meaningful actions; level is derived
+# from cumulative XP via a quadratic curve (level L needs curve_base*L*(L-1)/2).
+leveling:
+  curve_base: 100
+  xp:
+    harvest: 25
+    breed: 40
+    mint: 60
+
+# Timed NPC contracts: deliver target grams of a rarity by a deadline for a
+# GROW + XP reward. Offers are drawn from these weighted templates.
+contracts:
+  duration_days: 7
+  templates:
+    - {rarity: common,   grams: 100, reward: 250, xp: 30, weight: 3}
+    - {rarity: uncommon, grams: 80,  reward: 400, xp: 50, weight: 2}
+    - {rarity: rare,     grams: 60,  reward: 700, xp: 90, weight: 1}
+
+# On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
+# rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.
+chain:
+  token:
+    unit_name: GROW
+    asset_name: GrowCoin
+    total: 1000000000000000   # 10^15 base units
+    decimals: 6
+  nft:
+    # Harvests at/above this rarity, or stabilized strains at/above it, can mint.
+    mint_min_rarity: rare
+    strain_min_stability: 0.85
