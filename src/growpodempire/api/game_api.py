@@ -117,6 +117,7 @@ def leaderboards(board):
         "breeders": "top_breeders",
         "harvests": "biggest_harvesters",
         "level": "top_levels",
+        "researchers": "top_researchers",
     }
     if board not in boards:
         return _error(f"Unknown leaderboard '{board}'", 404)

@@ -7,7 +7,7 @@ from typing import List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..db.models import Player, Wallet, BreedingEvent, Harvest
+from ..db.models import Player, Wallet, BreedingEvent, Harvest, ResearchProgress
 
 
 class LeaderboardService:
@@ -29,6 +29,9 @@ class LeaderboardService:
 
     def top_breeders(self, limit: int = 10) -> List[dict]:
         return self._count_rank(BreedingEvent.player_id, limit)
+
+    def top_researchers(self, limit: int = 10) -> List[dict]:
+        return self._count_rank(ResearchProgress.player_id, limit)
 
     def biggest_harvesters(self, limit: int = 10) -> List[dict]:
         rows = (
