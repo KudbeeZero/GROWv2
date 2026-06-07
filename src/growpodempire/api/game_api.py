@@ -510,6 +510,35 @@ def plant_advisor(player_id, plant_id):
         return _error(f"Advisor unavailable: {e}", 503)
 
 
+@game_bp.post("/players/<player_id>/plants/<plant_id>/advisor/auto-care")
+@require_player
+@limiter.limit("10 per minute")
+def plant_auto_care(player_id, plant_id):
+    """Agentic auto-care: the AI calls care actions itself within a GROW budget
+    and action cap. Every action posts to the ledger like a manual one."""
+    from ..config import get_settings
+    from ..services.autocare_service import AutoCareService
+    from ..ai.autocare import AutoCareError
+
+    if not get_settings().enable_auto_care:
+        return _error("Auto-care is disabled", 403)
+
+    data = request.get_json(force=True, silent=True) or {}
+    budget = data.get("budget")
+    max_actions = data.get("max_actions")
+    try:
+        with session_scope() as s:
+            result = AutoCareService(s).run(
+                player_id, plant_id, budget=budget, max_actions=max_actions
+            )
+            result["plant"] = S.plant_dict(result["plant"])
+        return jsonify(result)
+    except GameError as e:
+        return _error(str(e), 404)
+    except (AutoCareError, InsufficientFundsError) as e:
+        return _error(f"Auto-care failed: {e}", 503)
+
+
 @game_bp.get("/plants/<plant_id>/events")
 def plant_events(plant_id):
     limit = bounded_int(request.args.get("limit"), "limit", default=50, low=1, high=200)

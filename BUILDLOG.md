@@ -99,6 +99,16 @@ Each entry: branch · what shipped · test count after merge.
   always available, so nothing changes until LiveOps rotates the season).
 - Migration `c7e2f4a16b80` adds `research_progress`, `consumable_inventory`, and `strains.season`.
 
+## AI auto-care (Phase 3b, agentic)
+- `claude/game-expansion-algo-sdk` · The Master Grower can now **act**: a new `ai/autocare.py`
+  (MockAutoCareProvider rule loop + ClaudeAutoCareProvider using the SDK `@beta_tool` tool runner)
+  drives water/feed/treat-pests/treat-disease against a real plant. `AutoCareService` binds those to
+  one plant behind a **SpendGuard** (per-invocation GROW budget + action cap, tuned in
+  `balance.yaml:auto_care`) — every tool call posts to the ledger via the normal care path, so the
+  loop is server-authoritative and can't overspend. New route
+  `POST /players/<id>/plants/<pid>/advisor/auto-care` (rate-limited, gated by `ENABLE_AUTO_CARE`,
+  default on). CI uses the mock loop (no key).
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,

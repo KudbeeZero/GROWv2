@@ -103,6 +103,12 @@ class Settings:
         self.use_mock_ai: bool = (
             os.environ.get("USE_MOCK_AI", "false").lower() == "true"
         )
+        # Agentic auto-care lets the advisor CALL care actions itself (spending
+        # in-game GROW within a per-invocation budget cap). On by default — the
+        # budget/action caps are the guardrail — but can be disabled outright.
+        self.enable_auto_care: bool = (
+            os.environ.get("ENABLE_AUTO_CARE", "true").lower() == "true"
+        )
 
 
 @lru_cache(maxsize=1)

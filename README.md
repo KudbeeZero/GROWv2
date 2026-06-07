@@ -122,8 +122,10 @@ model when `ANTHROPIC_API_KEY` is set and falls back to an offline deterministic
 advisor otherwise, so it works (and tests) with no key. There's also a
 **research tree** (15 upgrades across 5 branches that boost yield, quality,
 curing, and cut costs), a **consumables shop**, and **seasonal strains**.
-Planned next: an opt‑in **agentic auto‑care** mode where the advisor calls the
-care endpoints itself within a spend cap.
+The advisor also has an **agentic auto‑care** mode
+(`POST /players/<id>/plants/<id>/advisor/auto-care`): it calls the care actions
+itself to fix a struggling plant, bounded by a per‑run GROW budget and action
+cap (every action still posts to the ledger like a manual one).
 
 ## License
 

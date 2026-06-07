@@ -11,6 +11,7 @@ from typing import Optional
 from ..config import get_settings
 from .provider import AdvisorProvider
 from .mock import MockAdvisorProvider
+from .autocare import AutoCareProvider, MockAutoCareProvider
 
 
 def get_advisor_provider(settings=None) -> AdvisorProvider:
@@ -42,3 +43,13 @@ def shared_advisor(settings=None) -> AdvisorProvider:
 def reset_shared_advisor() -> None:
     global _advisor
     _advisor = None
+
+
+def get_auto_care_provider(settings=None) -> AutoCareProvider:
+    settings = settings or get_settings()
+    if settings.use_mock_ai or not settings.anthropic_api_key:
+        return MockAutoCareProvider()
+    from .autocare import ClaudeAutoCareProvider
+    return ClaudeAutoCareProvider(
+        api_key=settings.anthropic_api_key, model=settings.advisor_model
+    )

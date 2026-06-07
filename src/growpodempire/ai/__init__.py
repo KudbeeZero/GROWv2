@@ -9,14 +9,30 @@ yield, quality, or currency.
 """
 
 from .provider import AdvisorProvider, AdvisorReport, CareSuggestion, AdvisorError
-from .factory import get_advisor_provider, shared_advisor, reset_shared_advisor
+from .autocare import (
+    AutoCareProvider,
+    AutoCareBudget,
+    ActionRecord,
+    AutoCareError,
+)
+from .factory import (
+    get_advisor_provider,
+    shared_advisor,
+    reset_shared_advisor,
+    get_auto_care_provider,
+)
 
 __all__ = [
     "AdvisorProvider",
     "AdvisorReport",
     "CareSuggestion",
     "AdvisorError",
+    "AutoCareProvider",
+    "AutoCareBudget",
+    "ActionRecord",
+    "AutoCareError",
     "get_advisor_provider",
     "shared_advisor",
     "reset_shared_advisor",
+    "get_auto_care_provider",
 ]

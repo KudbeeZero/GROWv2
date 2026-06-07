@@ -294,6 +294,15 @@ shop:
 events:
   current_season: all   # all | spring | summer | fall | winter
 
+# Agentic AI auto-care (Phase 3b). The Master Grower can call care tools itself,
+# bounded per invocation by a GROW budget and a max number of actions. The spend
+# guard is the safety mechanism — every tool call still goes through the normal
+# ledger-posting care path (server-authoritative).
+auto_care:
+  default_budget: 200    # GROW the agent may spend per run if the caller omits one
+  max_budget: 1000       # hard ceiling on a requested budget
+  max_actions: 8         # max tool calls per run
+
 # On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
 # rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.
 chain:
