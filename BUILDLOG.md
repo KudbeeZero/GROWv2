@@ -19,3 +19,6 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/health-observability` (merged) · /health + /readiness probes, request-id access logs · 90 tests.
 - `feature/ci-github-actions` (merged) · CI: lint + migrations + seed + pytest on push/PR · 90 tests.
 - `feature/dockerize` (merged) · Dockerfile + compose (Postgres) + gunicorn server · 90 tests.
+- `feature/openapi-docs` (merged) · /openapi.json + Swagger UI at /docs · 92 tests.
+
+### Wave 1 (production hardening) complete: auth, errors, health, CI, docker, OpenAPI.
