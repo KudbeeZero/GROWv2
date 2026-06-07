@@ -354,3 +354,10 @@ class MarketListing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     unit_price: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
     status: Mapped[str] = mapped_column(String(16), default="active", nullable=False)
     buyer_id: Mapped[Optional[str]] = mapped_column(ForeignKey("players.id"))
+
+    # Auction fields (is_auction=False -> a fixed-price listing).
+    is_auction: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    min_bid: Mapped[Optional[Decimal]] = mapped_column(MONEY)
+    highest_bid: Mapped[Optional[Decimal]] = mapped_column(MONEY)
+    highest_bidder_id: Mapped[Optional[str]] = mapped_column(ForeignKey("players.id"))
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime)

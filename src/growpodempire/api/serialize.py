@@ -139,6 +139,11 @@ def listing_dict(listing) -> dict:
         "unit_price": _money(listing.unit_price),
         "status": listing.status,
         "buyer_id": listing.buyer_id,
+        "is_auction": listing.is_auction,
+        "min_bid": _money(listing.min_bid),
+        "highest_bid": _money(listing.highest_bid),
+        "highest_bidder_id": listing.highest_bidder_id,
+        "expires_at": _ts(listing.expires_at),
     }
 
 

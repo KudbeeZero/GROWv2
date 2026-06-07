@@ -447,6 +447,52 @@ def create_listing(player_id):
         return _error(str(e))
 
 
+@game_bp.post("/players/<player_id>/market/auction")
+@require_player
+def create_auction(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    required = ("seed_id", "quantity", "min_bid")
+    if not all(k in data for k in required):
+        return _error("seed_id, quantity, and min_bid are required")
+    try:
+        with session_scope() as s:
+            listing = GameService(s).create_seed_auction(
+                player_id, data["seed_id"], int(data["quantity"]), data["min_bid"],
+                duration_hours=int(data.get("duration_hours", 24)),
+            )
+            payload = S.listing_dict(listing)
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/market/<listing_id>/bid")
+@require_player
+def place_bid(player_id, listing_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if data.get("amount") is None:
+        return _error("amount is required")
+    try:
+        with session_scope() as s:
+            listing = GameService(s).place_bid(player_id, listing_id, data["amount"])
+            payload = S.listing_dict(listing)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/market/<listing_id>/settle")
+@require_player
+def settle_auction(player_id, listing_id):
+    try:
+        with session_scope() as s:
+            listing = GameService(s).settle_auction(player_id, listing_id)
+            payload = S.listing_dict(listing)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
 @game_bp.post("/players/<player_id>/market/<listing_id>/buy")
 @require_player
 def buy_listing(player_id, listing_id):
