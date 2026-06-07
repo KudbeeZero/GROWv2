@@ -421,6 +421,77 @@ class GameService:
             i += 1
         return slug
 
+    def stabilize_strain(
+        self, player_id: str, strain_id: str, rng_seed: Optional[int] = None
+    ) -> Strain:
+        """Self/backcross a line: consume a seed + pay a fee to produce a more
+        stable next generation (narrower traits), eventually unlocking NFT mint.
+        """
+        parent = self.get_strain(strain_id)
+        self.session.flush()  # surface any pending seed-inventory changes
+        stack = (
+            self.session.query(SeedInventory)
+            .filter(
+                SeedInventory.player_id == player_id,
+                SeedInventory.strain_id == strain_id,
+                SeedInventory.quantity > 0,
+            )
+            .one_or_none()
+        )
+        if stack is None:
+            raise GameError("You need a seed of this strain to stabilize it")
+
+        fee = pricing.breeding_fee(parent.rarity, parent.rarity, self.cfg)
+        post(self.session, player_id, -fee, LedgerEntryType.BREEDING_FEE, ref_type="stabilize")
+        stack.quantity -= 1
+
+        if rng_seed is None:
+            settings = get_settings()
+            rng_seed = settings.rng_seed if settings.rng_seed is not None else random.randrange(2**31)
+        rng = random.Random(rng_seed)
+
+        # Selfing: same genome on both sides -> little segregation; we then raise
+        # stability and re-derive the (narrower) expressed ranges.
+        result = cross(
+            parent.genome, parent.genome, rng,
+            stability_a=parent.stability, stability_b=parent.stability,
+            generation_a=parent.generation, generation_b=parent.generation,
+        )
+        increment = float(self.cfg.raw.get("breeding", {}).get("stabilize_increment", 0.15))
+        new_stability = min(1.0, parent.stability + increment)
+        generation = parent.generation + 1
+        rarity = assign_rarity(result.genome, new_stability, (parent.rarity, parent.rarity))
+        fields = derive_strain_fields(result.genome, new_stability)
+
+        name = f"{parent.name} S{generation}"
+        offspring = Strain(
+            name=name,
+            slug=self._unique_slug(slugify(name)),
+            lineage_type=LineageType.BRED.value,
+            rarity=rarity.value,
+            terpenes=list(parent.terpenes or []),
+            genome=result.genome,
+            stability=new_stability,
+            generation=generation,
+            parent_a_id=parent.id,
+            parent_b_id=parent.id,
+            is_base_catalog=False,
+            created_by_player_id=player_id,
+            **fields,
+        )
+        self.session.add(offspring)
+        self.session.flush()
+
+        self.session.add(BreedingEvent(
+            player_id=player_id, parent_a_id=parent.id, parent_b_id=parent.id,
+            offspring_strain_id=offspring.id, rng_seed=rng_seed,
+            inherited_traits={"stabilized_from": parent.id},
+        ))
+        new_stack = self._get_or_create_seed_stack(player_id, offspring.id, SeedSource.BRED)
+        new_stack.quantity += 1
+        leveling_service.award(self.session, player_id, "breed", self.cfg)
+        return offspring
+
     # ----- Harvest & sale -------------------------------------------------
     def harvest_plant(
         self,
