@@ -12,6 +12,7 @@ from ..db.session import init_db
 from .game_api import game_bp
 from .errors import register_error_handlers
 from .observability import register_observability
+from .openapi import register_openapi
 
 
 def create_app(init_database: bool = True):
@@ -28,6 +29,9 @@ def create_app(init_database: bool = True):
 
     # Health/readiness probes + per-request logging.
     register_observability(app)
+
+    # Self-describing API docs: /openapi.json + Swagger UI at /docs.
+    register_openapi(app)
 
     # DB-backed game layer (players, economy, strains, breeding, market).
     app.register_blueprint(game_bp)
