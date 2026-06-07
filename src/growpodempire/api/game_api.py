@@ -15,6 +15,7 @@ from ..services.minting_service import MintingService
 from ..services.progression_service import ProgressionService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
+from .auth import require_player
 from . import serialize as S
 
 game_bp = Blueprint("game", __name__, url_prefix="/api/game")
@@ -41,6 +42,8 @@ def create_player():
             player = svc.create_player(data["username"], data.get("email"))
             wallet = svc.get_wallet(player.id)
             payload = player_payload(player, wallet)
+            # Returned exactly once — the client must store it to authenticate writes.
+            payload["api_key"] = player.api_key
         return jsonify(payload), 201
     except GameError as e:
         return _error(str(e))
@@ -124,6 +127,7 @@ def list_seeds(player_id):
 
 
 @game_bp.post("/players/<player_id>/seeds/buy")
+@require_player
 def buy_seed(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("strain_id"):
@@ -140,6 +144,7 @@ def buy_seed(player_id):
 
 
 @game_bp.post("/players/<player_id>/pods")
+@require_player
 def create_pod(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("name"):
@@ -160,6 +165,7 @@ def create_pod(player_id):
 
 
 @game_bp.post("/players/<player_id>/plant")
+@require_player
 def plant_seed(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("seed_id") or not data.get("pod_id"):
@@ -177,6 +183,7 @@ def plant_seed(player_id):
 
 # ----- Breeding ----------------------------------------------------------
 @game_bp.post("/players/<player_id>/breed")
+@require_player
 def breed(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("parent_a_id") or not data.get("parent_b_id"):
@@ -199,6 +206,7 @@ def breed(player_id):
 
 # ----- Harvest -----------------------------------------------------------
 @game_bp.post("/players/<player_id>/plants/<plant_id>/harvest")
+@require_player
 def harvest(player_id, plant_id):
     data = request.get_json(force=True, silent=True) or {}
     try:
@@ -253,28 +261,33 @@ def _care_action(player_id, plant_id, method_name, **kwargs):
 
 
 @game_bp.post("/players/<player_id>/plants/<plant_id>/water")
+@require_player
 def water_plant(player_id, plant_id):
     data = request.get_json(force=True, silent=True) or {}
     return _care_action(player_id, plant_id, "water", amount=data.get("amount"))
 
 
 @game_bp.post("/players/<player_id>/plants/<plant_id>/feed")
+@require_player
 def feed_plant(player_id, plant_id):
     data = request.get_json(force=True, silent=True) or {}
     return _care_action(player_id, plant_id, "feed", amount=data.get("amount"))
 
 
 @game_bp.post("/players/<player_id>/plants/<plant_id>/treat-pests")
+@require_player
 def treat_pests(player_id, plant_id):
     return _care_action(player_id, plant_id, "treat_pests")
 
 
 @game_bp.post("/players/<player_id>/plants/<plant_id>/treat-disease")
+@require_player
 def treat_disease(player_id, plant_id):
     return _care_action(player_id, plant_id, "treat_disease")
 
 
 @game_bp.post("/players/<player_id>/pods/<pod_id>/environment")
+@require_player
 def set_environment(player_id, pod_id):
     data = request.get_json(force=True, silent=True) or {}
     required = ("temperature", "humidity", "co2_level", "light_intensity", "ph_level")
@@ -303,6 +316,7 @@ def market():
 
 
 @game_bp.post("/players/<player_id>/market/list")
+@require_player
 def create_listing(player_id):
     data = request.get_json(force=True, silent=True) or {}
     required = ("seed_id", "quantity", "unit_price")
@@ -323,6 +337,7 @@ def create_listing(player_id):
 
 
 @game_bp.post("/players/<player_id>/market/<listing_id>/buy")
+@require_player
 def buy_listing(player_id, listing_id):
     try:
         with session_scope() as s:
@@ -335,6 +350,7 @@ def buy_listing(player_id, listing_id):
 
 # ----- Progression: daily stipend & achievements -------------------------
 @game_bp.post("/players/<player_id>/daily")
+@require_player
 def claim_daily(player_id):
     try:
         with session_scope() as s:
@@ -352,6 +368,7 @@ def list_achievements(player_id):
 
 
 @game_bp.post("/players/<player_id>/achievements/<key>/claim")
+@require_player
 def claim_achievement(player_id, key):
     try:
         with session_scope() as s:
@@ -363,6 +380,7 @@ def claim_achievement(player_id, key):
 
 # ----- On-chain: wallet linking, NFT minting, metadata -------------------
 @game_bp.post("/players/<player_id>/wallet/link")
+@require_player
 def link_wallet(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("address"):
@@ -377,6 +395,7 @@ def link_wallet(player_id):
 
 
 @game_bp.post("/players/<player_id>/harvests/<harvest_id>/mint")
+@require_player
 def mint_harvest(player_id, harvest_id):
     try:
         with session_scope() as s:
@@ -388,6 +407,7 @@ def mint_harvest(player_id, harvest_id):
 
 
 @game_bp.post("/players/<player_id>/strains/<strain_id>/mint")
+@require_player
 def mint_strain(player_id, strain_id):
     try:
         with session_scope() as s:
