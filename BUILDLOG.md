@@ -29,3 +29,6 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/strain-stabilization` (merged) · selfing raises stability over generations -> unlocks NFT mint · 106 tests.
 - `feature/asa-wallet-settlement` (merged) · GROW withdraw/deposit mirrors ledger <-> ASA · 110 tests.
 - `feature/contracts-orders` (merged) · timed NPC delivery contracts for GROW + XP · 114 tests.
+- `feature/market-auctions` (merged) · bid-based auctions with refunds + settlement · 117 tests.
+
+### Wave 2 (gameplay depth) complete: search/favorites, leaderboards, auctions, weather, automation, stabilization, ASA settlement, contracts.
