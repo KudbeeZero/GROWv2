@@ -23,6 +23,8 @@ def player_dict(player, balance=None) -> dict:
         "username": player.username,
         "email": player.email,
         "algorand_address": player.algorand_address,
+        "xp": getattr(player, "xp", 0),
+        "level": getattr(player, "level", 1),
         "created_at": _ts(player.created_at),
     }
     if balance is not None:

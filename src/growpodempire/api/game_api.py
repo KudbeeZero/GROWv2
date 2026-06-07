@@ -13,6 +13,7 @@ from ..services.game_service import GameService, GameError
 from ..services.simulation_service import SimulationService
 from ..services.minting_service import MintingService
 from ..services.progression_service import ProgressionService
+from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from . import serialize as S
 
@@ -69,6 +70,17 @@ def get_wallet(player_id):
     try:
         with session_scope() as s:
             payload = S.wallet_dict(GameService(s).get_wallet(player_id))
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
+@game_bp.get("/players/<player_id>/level")
+def get_level(player_id):
+    try:
+        with session_scope() as s:
+            player = GameService(s).get_player(player_id)
+            payload = leveling_service.progress(player)
         return jsonify(payload)
     except GameError as e:
         return _error(str(e), 404)
