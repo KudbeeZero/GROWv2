@@ -14,7 +14,7 @@ services:
     # Run schema migrations and (idempotently) seed the strain catalog before
     # the new version goes live.
     preDeployCommand: "alembic upgrade head && python -m growpodempire.db.seed"
-    startCommand: python server.py
+    startCommand: "gunicorn -b 0.0.0.0:$PORT -w 2 server:app"
     branch: main
     envVars:
       - key: DATABASE_URL

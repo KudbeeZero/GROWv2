@@ -2,6 +2,7 @@ flask==2.3.2
 # Pin Werkzeug to the 2.3.x line; Flask 2.3.2 is incompatible with Werkzeug 3.x.
 werkzeug==2.3.7
 flask-cors==4.0.0
+gunicorn==21.2.0
 sqlalchemy==2.0.23
 alembic==1.13.2
 pydantic==2.5.0
