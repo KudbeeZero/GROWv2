@@ -15,3 +15,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/daily-stipend-quests` (merged) · daily login stipend + achievement rewards · 81 tests.
 - `feature/player-leveling` (merged) · XP/levels awarded on harvest/breed/mint · 81 tests.
 - `feature/api-key-auth` (merged) · per-player API-key auth on all write endpoints · 84 tests.
+- `feature/error-handling-validation` (merged) · uniform JSON error envelope + 1 MiB body cap · 87 tests.
