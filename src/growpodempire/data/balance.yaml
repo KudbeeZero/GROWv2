@@ -132,6 +132,13 @@ simulation:
     water_amount: 35
     feed_amount: 30
 
+  # Pod automation (higher tiers): top resources up when they run low.
+  automation:
+    water_refill_below: 45
+    water_refill_to: 72
+    nutrient_refill_below: 40
+    nutrient_refill_to: 72
+
   # Random weather events that shift a pod's environment (then feed the sim).
   # Deltas are applied to the current snapshot; `set_*` overrides absolutely.
   weather:

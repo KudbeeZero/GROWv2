@@ -85,6 +85,8 @@ def pod_dict(pod) -> dict:
         "capacity": pod.capacity,
         "tier": pod.tier,
         "active": pod.active,
+        "auto_water": pod.auto_water,
+        "auto_feed": pod.auto_feed,
     }
 
 

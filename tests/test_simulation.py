@@ -67,9 +67,16 @@ def test_neglect_reduces_health(session):
 
 
 def test_high_humidity_breeds_pests(session):
-    # Low pest-resistance strain in damp air -> infestation onset event.
+    # Damp air -> infestation onset. Spawn is stochastic (seeded by the plant's
+    # random id), so force a high spawn rate to keep the test deterministic.
+    import copy
+    from growpodempire.economy.config import EconomyConfig
+    raw = copy.deepcopy(CFG.raw)
+    raw["simulation"]["pests"]["base_spawn_chance_per_hour"] = 0.6
+    hot = EconomyConfig(raw=raw)
+
     _, _, plant = _plant(session, slug="blue-dream", humidity=72)
-    events = engine.catch_up(session, plant, BASE + timedelta(days=12), CFG)
+    events = engine.catch_up(session, plant, BASE + timedelta(days=4), hot)
     onsets = [
         e for e in events
         if e.event_type == "condition_onset"

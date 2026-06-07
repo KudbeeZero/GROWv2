@@ -260,11 +260,42 @@ class GameService:
                 ref_type="pod_tier",
                 ref_id=tier,
             )
+        auto_water, auto_feed = self._tier_automation(tier)
         pod = GrowPod(
-            player_id=player_id, name=name, capacity=capacity, tier=tier
+            player_id=player_id, name=name, capacity=capacity, tier=tier,
+            auto_water=auto_water, auto_feed=auto_feed,
         )
         self.session.add(pod)
         self.session.flush()
+        return pod
+
+    @staticmethod
+    def _tier_automation(tier: str) -> tuple:
+        """(auto_water, auto_feed) granted by a pod tier."""
+        return {
+            "basic": (False, False),
+            "standard": (True, False),
+            "pro": (True, True),
+        }.get(tier, (False, False))
+
+    def upgrade_pod(self, player_id: str, pod_id: str, new_tier: str) -> GrowPod:
+        pod = self.session.get(GrowPod, pod_id)
+        if pod is None or pod.player_id != player_id:
+            raise GameError("Pod not found")
+        try:
+            new_price = self.cfg.pod_price(new_tier)
+            old_price = self.cfg.pod_price(pod.tier)
+        except KeyError:
+            raise GameError(f"Unknown pod tier '{new_tier}'")
+        if new_price <= old_price:
+            raise GameError("New tier must be an upgrade")
+
+        post(
+            self.session, player_id, -to_money(new_price - old_price),
+            LedgerEntryType.POD_PURCHASE, ref_type="pod_upgrade", ref_id=new_tier,
+        )
+        pod.tier = new_tier
+        pod.auto_water, pod.auto_feed = self._tier_automation(new_tier)
         return pod
 
     def plant_seed(self, player_id: str, seed_id: str, pod_id: str) -> Plant:

@@ -120,7 +120,14 @@ def _health_target(plant: Plant, env: Dict, sim: Dict) -> float:
     return max(0.0, min(100.0, 100.0 - penalty))
 
 
-def _step(plant: Plant, env: Dict, sim: Dict, rng: random.Random, t: datetime) -> List[dict]:
+def _step(
+    plant: Plant,
+    env: Dict,
+    sim: Dict,
+    rng: random.Random,
+    t: datetime,
+    auto: Optional[Dict] = None,
+) -> List[dict]:
     """Advance the plant by one simulated hour. Returns stage/death events."""
     events: List[dict] = []
     decay = sim.get("resource_decay", {})
@@ -130,6 +137,14 @@ def _step(plant: Plant, env: Dict, sim: Dict, rng: random.Random, t: datetime) -
     plant.nutrient_level = max(
         0.0, plant.nutrient_level - decay.get("nutrient_per_hour", 1.0)
     )
+
+    # 1b. Pod automation tops resources back up when they run low.
+    if auto:
+        autocfg = sim.get("automation", {})
+        if auto.get("water") and plant.water_level < autocfg.get("water_refill_below", 45):
+            plant.water_level = autocfg.get("water_refill_to", 72)
+        if auto.get("feed") and plant.nutrient_level < autocfg.get("nutrient_refill_below", 40):
+            plant.nutrient_level = autocfg.get("nutrient_refill_to", 72)
 
     # 2. Pests: spawn when absent, otherwise worsen until treated.
     pests = sim.get("pests", {})
@@ -203,6 +218,10 @@ def catch_up(session, plant: Plant, now: datetime, cfg) -> List[PlantEvent]:
 
     pod = session.get(GrowPod, plant.pod_id)
     env = _env_for(plant, pod, sim)
+    auto = {
+        "water": bool(pod and pod.auto_water),
+        "feed": bool(pod and pod.auto_feed),
+    }
 
     elapsed_hours = int((now - plant.last_tick_at).total_seconds() // 3600)
     elapsed_hours = max(0, min(elapsed_hours, sim.get("max_catchup_hours", 8760)))
@@ -212,7 +231,7 @@ def catch_up(session, plant: Plant, now: datetime, cfg) -> List[PlantEvent]:
     for _ in range(elapsed_hours):
         t = plant.last_tick_at + timedelta(hours=1)
         rng = _rng_for(plant.id, t)
-        step_events = _step(plant, env, sim, rng, t)
+        step_events = _step(plant, env, sim, rng, t, auto)
         plant.last_tick_at = t
 
         for ev in step_events:
