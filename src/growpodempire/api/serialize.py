@@ -134,6 +134,17 @@ def listing_dict(listing) -> dict:
     }
 
 
+def event_dict(event) -> dict:
+    return {
+        "id": event.id,
+        "plant_id": event.plant_id,
+        "timestamp": _ts(event.timestamp),
+        "event_type": event.event_type,
+        "severity": event.severity,
+        "payload": event.payload,
+    }
+
+
 def ledger_dict(entry) -> dict:
     return {
         "id": entry.id,

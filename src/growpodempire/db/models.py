@@ -243,6 +243,22 @@ class GrowthMeasurement(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (Index("ix_growth_plant_ts", "plant_id", "timestamp"),)
 
 
+class PlantEvent(UUIDPrimaryKeyMixin, Base):
+    """Simulation event log: stage changes, condition onsets, death, care."""
+
+    __tablename__ = "plant_events"
+
+    plant_id: Mapped[str] = mapped_column(ForeignKey("plants.id"), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    event_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    severity: Mapped[Optional[str]] = mapped_column(String(16))
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    __table_args__ = (Index("ix_event_plant_ts", "plant_id", "timestamp"),)
+
+
 class BreedingEvent(UUIDPrimaryKeyMixin, Base):
     """An act of crossing two strains into a new offspring strain."""
 

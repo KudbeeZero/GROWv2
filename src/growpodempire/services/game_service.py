@@ -27,6 +27,8 @@ from ..enums import (
     ListingItemType,
 )
 from ..genetics.breeding import cross, derive_strain_fields, assign_rarity
+from ..simulation import engine
+from ..simulation.clock import Clock, SystemClock
 from ..db.models import (
     Player,
     Wallet,
@@ -47,9 +49,15 @@ class GameError(Exception):
 
 
 class GameService:
-    def __init__(self, session: Session, config: Optional[EconomyConfig] = None):
+    def __init__(
+        self,
+        session: Session,
+        config: Optional[EconomyConfig] = None,
+        clock: Optional[Clock] = None,
+    ):
         self.session = session
         self.cfg = config or get_economy_config()
+        self.clock = clock or SystemClock()
 
     # ----- Players & wallets ---------------------------------------------
     def create_player(self, username: str, email: Optional[str] = None) -> Player:
@@ -325,14 +333,18 @@ class GameService:
         if plant.harvested:
             raise GameError("Plant already harvested")
 
+        # Bring the plant's simulated state up to "now" so yield/quality reflect
+        # how it was actually grown.
+        engine.catch_up(self.session, plant, self.clock.now(), self.cfg)
+
         strain = self.get_strain(plant.strain_id)
 
-        # Until the Phase 2 sim drives these, derive sensible values from the
-        # genome and current plant health.
-        if weight_g is None:
-            weight_g = (strain.yield_min + strain.yield_max) / 2.0
+        # Yield scales with health; quality is the plant's health at harvest.
         if quality is None:
             quality = max(0.0, min(100.0, plant.health))
+        if weight_g is None:
+            midpoint = (strain.yield_min + strain.yield_max) / 2.0
+            weight_g = round(midpoint * (0.4 + 0.6 * plant.health / 100.0), 1)
 
         thc_actual = (strain.thc_min + strain.thc_max) / 2.0
         cbd_actual = (strain.cbd_min + strain.cbd_max) / 2.0

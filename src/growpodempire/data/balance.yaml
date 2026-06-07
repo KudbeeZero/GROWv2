@@ -60,3 +60,74 @@ harvest_sale:
 market:
   listing_fee_pct: 0.03   # charged to the seller at listing time
   sale_tax_pct: 0.05      # withheld from the seller's proceeds on a sale
+
+# Real-time grow simulation (Phase 2). The engine advances a plant in fixed
+# 1-hour steps from its last_tick_at to "now" (compute-on-read catch-up), so
+# correctness never depends on a background process being alive.
+simulation:
+  max_catchup_hours: 8760   # 1-year safety cap on a single catch-up
+
+  resource_decay:
+    water_per_hour: 1.5     # how fast the medium dries out
+    nutrient_per_hour: 1.0
+
+  water:
+    optimal_low: 40
+    optimal_high: 78
+    overwater_threshold: 88   # sustained above -> overwatered / root rot
+    rot_threshold: 96
+    underwater_threshold: 15  # below -> wilting
+
+  nutrient:
+    optimal_low: 35
+    optimal_high: 82
+    burn_threshold: 95
+    deficient_threshold: 20
+
+  # Pod environment optimal bands; deviations sap health.
+  environment:
+    temperature: [20, 28]
+    humidity: [40, 60]
+    ph_level: [6.0, 7.0]
+    # Assumed when a pod has no sensor snapshot yet (kept optimal = no penalty).
+    defaults:
+      temperature: 24
+      humidity: 50
+      ph_level: 6.5
+
+  pests:
+    base_spawn_chance_per_hour: 0.012
+    humidity_high: 62                 # damp air invites pests
+    humidity_spawn_bonus: 0.03
+    growth_per_hour: 1.6              # infestation worsens until treated
+
+  disease:
+    humidity_threshold: 64            # mildew sets in above this humidity
+    growth_per_hour: 1.3
+
+  health:
+    drift_rate: 0.12                  # fraction of (target-health) closed per hour
+    death_threshold: 1.0              # at/below this health the plant dies
+    water_stress_weight: 0.6
+    nutrient_stress_weight: 0.5
+    env_stress_weight: 0.5
+    pest_weight: 0.45                 # health target penalty per pest_level point
+    disease_weight: 0.55
+
+  # Stage durations in days (flowering comes from the strain's genome).
+  stages:
+    seed_days: 3
+    germination_days: 5
+    seedling_days: 10
+    vegetative_days: 26
+
+  # Height gain (cm/day) at full health, by stage.
+  growth:
+    seedling_cm_per_day: 0.6
+    vegetative_cm_per_day: 2.2
+    flowering_cm_per_day: 0.5
+
+  # How much a player action moves a level.
+  actions:
+    water_amount: 35
+    feed_amount: 30

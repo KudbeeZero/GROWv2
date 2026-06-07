@@ -10,6 +10,7 @@ from flask import Blueprint, request, jsonify
 
 from ..db.session import session_scope
 from ..services.game_service import GameService, GameError
+from ..services.simulation_service import SimulationService
 from ..economy.ledger import InsufficientFundsError
 from . import serialize as S
 
@@ -197,6 +198,83 @@ def harvest(player_id, plant_id):
             )
             payload = S.harvest_dict(h)
         return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+# ----- Simulation (real-time grow) ---------------------------------------
+@game_bp.get("/players/<player_id>/plants/<plant_id>/state")
+def plant_state(player_id, plant_id):
+    """Return the plant's live simulated state (runs catch-up first)."""
+    try:
+        with session_scope() as s:
+            sim = SimulationService(s)
+            plant = sim.get_state(player_id, plant_id)
+            events = sim.get_events(plant_id, limit=20)
+            payload = S.plant_dict(plant)
+            payload["recent_events"] = [S.event_dict(e) for e in events]
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
+@game_bp.get("/plants/<plant_id>/events")
+def plant_events(plant_id):
+    limit = int(request.args.get("limit", 50))
+    with session_scope() as s:
+        events = SimulationService(s).get_events(plant_id, limit=limit)
+        payload = [S.event_dict(e) for e in events]
+    return jsonify(payload)
+
+
+def _care_action(player_id, plant_id, method_name, **kwargs):
+    try:
+        with session_scope() as s:
+            sim = SimulationService(s)
+            plant = getattr(sim, method_name)(player_id, plant_id, **kwargs)
+            payload = S.plant_dict(plant)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/water")
+def water_plant(player_id, plant_id):
+    data = request.get_json(force=True, silent=True) or {}
+    return _care_action(player_id, plant_id, "water", amount=data.get("amount"))
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/feed")
+def feed_plant(player_id, plant_id):
+    data = request.get_json(force=True, silent=True) or {}
+    return _care_action(player_id, plant_id, "feed", amount=data.get("amount"))
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/treat-pests")
+def treat_pests(player_id, plant_id):
+    return _care_action(player_id, plant_id, "treat_pests")
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/treat-disease")
+def treat_disease(player_id, plant_id):
+    return _care_action(player_id, plant_id, "treat_disease")
+
+
+@game_bp.post("/players/<player_id>/pods/<pod_id>/environment")
+def set_environment(player_id, pod_id):
+    data = request.get_json(force=True, silent=True) or {}
+    required = ("temperature", "humidity", "co2_level", "light_intensity", "ph_level")
+    if not all(k in data for k in required):
+        return _error("temperature, humidity, co2_level, light_intensity, ph_level required")
+    try:
+        with session_scope() as s:
+            pod = SimulationService(s).set_environment(
+                player_id, pod_id,
+                data["temperature"], data["humidity"], data["co2_level"],
+                data["light_intensity"], data["ph_level"],
+            )
+            payload = S.pod_dict(pod)
+        return jsonify(payload)
     except GameError as e:
         return _error(str(e))
 
