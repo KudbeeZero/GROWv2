@@ -702,11 +702,13 @@ class GameService:
             raise GameError("Auction has ended")
 
         amount = to_money(amount)
-        floor = listing.highest_bid or listing.min_bid
-        if amount <= floor and amount != listing.min_bid:
-            raise GameError(f"Bid must exceed the current bid of {floor}")
         if amount < listing.min_bid:
             raise GameError(f"Bid must be at least the minimum {listing.min_bid}")
+        # The first bid may equal min_bid; every later bid must beat the standing
+        # high bid. (A previous version let a player re-bid min_bid even after the
+        # floor had risen, undercutting the auction.)
+        if listing.highest_bid is not None and amount <= listing.highest_bid:
+            raise GameError(f"Bid must exceed the current bid of {listing.highest_bid}")
 
         # Hold the new bid (refund the previous high bidder first).
         post(self.session, bidder_id, -amount, LedgerEntryType.AUCTION_BID,

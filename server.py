@@ -1,8 +1,7 @@
 """
 Render entry point.
 
-Serves the full application factory (legacy cultivation endpoints + the new
-DB-backed game API) on Render's dynamic PORT.
+Serves the application factory (the DB-backed game API) on Render's dynamic PORT.
 """
 
 import os

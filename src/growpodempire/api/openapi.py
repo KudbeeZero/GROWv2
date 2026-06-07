@@ -10,6 +10,8 @@ import re
 
 from flask import jsonify, Response
 
+from .. import __version__
+
 _PARAM_RE = re.compile(r"<(?:[^:<>]+:)?([^<>]+)>")
 _WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
@@ -50,8 +52,8 @@ def build_spec(app) -> dict:
     return {
         "openapi": "3.0.3",
         "info": {
-            "title": "GrowPodEmpire API",
-            "version": "3.0.0",
+            "title": "GROWv2 API",
+            "version": __version__,
             "description": "Cannabis cultivation game — economy, genetics, real-time "
             "simulation, and Algorand on-chain assets.",
         },
@@ -68,7 +70,7 @@ def build_spec(app) -> dict:
 _SWAGGER_HTML = """<!DOCTYPE html>
 <html>
 <head>
-  <title>GrowPodEmpire API Docs</title>
+  <title>GROWv2 API Docs</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
 </head>
 <body>

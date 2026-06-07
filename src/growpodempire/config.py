@@ -68,11 +68,6 @@ class Settings:
         self.ratelimit_default: str = os.environ.get(
             "RATELIMIT_DEFAULT", "240 per minute"
         )
-        # Legacy in-memory cultivation endpoints are unauthenticated and bypass
-        # the economy; keep them OFF unless explicitly enabled.
-        self.enable_legacy_api: bool = (
-            os.environ.get("ENABLE_LEGACY_API", "false").lower() == "true"
-        )
         # Cap on-chain withdrawals per player per rolling 24h (defence in depth
         # around the treasury). 0 disables the cap.
         wd_cap = os.environ.get("MAX_WITHDRAWAL_PER_DAY", "10000")

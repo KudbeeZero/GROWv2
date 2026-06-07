@@ -47,6 +47,18 @@ Each entry: branch · what shipped · test count after merge.
 
 ### Sprint 3 complete: full game loop playable in-browser against the live API.
 
+## Maintenance — fixes & housekeeping
+- `claude/game-expansion-algo-sdk` · **Fixed a critical auction-bid exploit**: a player
+  could re-bid the opening `min_bid` even after the floor rose, undercutting the standing
+  high bid (`game_service.place_bid`). Added a regression test.
+- Removed the dead **legacy v1 subsystem** (`app.py`, in-memory `models/`, `blockchain/`,
+  `growth_tracker.py`, `environmental_monitor.py`, `api/legacy_api.py`, `demo.py`, `cli.py`,
+  + their 2 tests) and its `ENABLE_LEGACY_API` plumbing. Dropped the now-unused `numpy`/`pandas`
+  deps. Rewrote `README.md` to describe the real GROWv2; deleted stale `API.md`/`IMPLEMENTATION.md`
+  (the generated OpenAPI at `/openapi.json` + `/docs` is the source of truth). Centralized the
+  version/name string; named the chain `TREASURY` sentinel (and resolved it in the real provider);
+  guarded web `localStorage` access.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
