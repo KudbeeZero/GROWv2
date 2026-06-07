@@ -100,6 +100,15 @@ class MockAdvisorProvider(AdvisorProvider):
             diagnosis = f"At {stage} with health {health:.0f}. Resource levels are healthy."
             summary = "Looking healthy — stay the course."
 
+        # Coach progression: mention the cheapest worthwhile next research.
+        rec = (context.get("research", {}) or {}).get("recommended_next") or []
+        if rec:
+            top = rec[0]
+            diagnosis += (
+                f" Tip: consider researching {top['name']} "
+                f"({top['effect']}, {top['cost']:g} GROW)."
+            )
+
         return AdvisorReport(
             summary=summary, severity=severity, diagnosis=diagnosis, suggestions=suggestions
         )

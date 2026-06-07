@@ -50,12 +50,34 @@ class AdvisorService:
                 out[key] = round(float(gene["value"]), 3)
         return out
 
+    def _research_context(self, player_id: str) -> dict:
+        """Unlocked upgrades + the cheapest currently-available next ones, so the
+        advisor can coach the player's progression, not just the plant."""
+        from .research_service import ResearchService
+        tree = ResearchService(self.session, config=self.cfg).list_tree(player_id)
+        unlocked = [n["name"] for n in tree if n["unlocked"]]
+        # Reachable next steps: prerequisites met and not yet unlocked. Cheapest
+        # first, so the advisor can coach even a new player toward their first
+        # upgrade (noting the level gate where relevant).
+        candidates = sorted(
+            (n for n in tree if n["prereqs_met"] and not n["unlocked"]),
+            key=lambda n: n["cost"],
+        )
+        recommended = [
+            {"key": n["key"], "name": n["name"], "cost": n["cost"],
+             "effect": n["description"], "level_req": n["level_req"],
+             "ready": n["available"]}
+            for n in candidates[:3]
+        ]
+        return {"unlocked": unlocked, "recommended_next": recommended}
+
     def build_context(self, player_id: str, plant_id: str) -> dict:
         plant = self.sim.get_state(player_id, plant_id)  # runs catch-up
         pod = self.session.get(GrowPod, plant.pod_id)
         events = self.sim.get_events(plant_id, limit=10)
 
         return {
+            "research": self._research_context(player_id),
             "plant": {
                 "growth_stage": plant.growth_stage,
                 "height_cm": round(plant.height, 1),

@@ -29,7 +29,10 @@ _SYSTEM_PROMPT = (
     "data not present. Recommend actions only from the allowed set (water, feed, "
     "treat_pests, treat_disease, adjust_environment, harvest, wait). Be concise "
     "and practical: a player should be able to act on your summary immediately. "
-    "Order suggestions by urgency."
+    "Order suggestions by urgency. The context also includes the player's "
+    "unlocked research and recommended next upgrades — when the plant is stable "
+    "you may briefly coach which upgrade helps most, but keep the structured "
+    "suggestions limited to the allowed care actions."
 )
 
 _MODEL_DEFAULT = "claude-opus-4-8"

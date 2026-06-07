@@ -103,3 +103,17 @@ def test_advisor_context_includes_genome_and_environment(db):
         assert "thc" in ctx["genome"]            # genome summary populated
         assert "temperature" in ctx["environment"]
         assert ctx["plant"]["growth_stage"]
+
+
+def test_advisor_is_research_aware(db):
+    clock = FrozenClock(BASE)
+    with session_scope() as s:
+        p, plant = _planted(s, clock)
+        advisor = AdvisorService(s, provider=MockAdvisorProvider(), clock=clock)
+        ctx = advisor.build_context(p.id, plant.id)
+        # A fresh level-1 player has unlocked nothing but has cheap nodes available.
+        assert ctx["research"]["unlocked"] == []
+        assert len(ctx["research"]["recommended_next"]) >= 1
+        # The mock advisor coaches the next upgrade in its diagnosis.
+        report = advisor.advise(p.id, plant.id)
+        assert "researching" in report.diagnosis.lower()
