@@ -11,6 +11,7 @@ from ..models import EnvironmentalCondition, GrowthStage
 from ..db.session import init_db
 from .game_api import game_bp
 from .errors import register_error_handlers
+from .observability import register_observability
 
 
 def create_app(init_database: bool = True):
@@ -24,6 +25,9 @@ def create_app(init_database: bool = True):
 
     # Consistent JSON error responses + request-size cap.
     register_error_handlers(app)
+
+    # Health/readiness probes + per-request logging.
+    register_observability(app)
 
     # DB-backed game layer (players, economy, strains, breeding, market).
     app.register_blueprint(game_bp)
