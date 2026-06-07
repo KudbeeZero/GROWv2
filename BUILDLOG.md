@@ -16,3 +16,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/player-leveling` (merged) · XP/levels awarded on harvest/breed/mint · 81 tests.
 - `feature/api-key-auth` (merged) · per-player API-key auth on all write endpoints · 84 tests.
 - `feature/error-handling-validation` (merged) · uniform JSON error envelope + 1 MiB body cap · 87 tests.
+- `feature/health-observability` (merged) · /health + /readiness probes, request-id access logs · 90 tests.
