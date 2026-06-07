@@ -14,6 +14,7 @@ from ..services.simulation_service import SimulationService
 from ..services.minting_service import MintingService
 from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
+from ..services.weather_service import WeatherService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
@@ -343,6 +344,23 @@ def treat_pests(player_id, plant_id):
 @require_player
 def treat_disease(player_id, plant_id):
     return _care_action(player_id, plant_id, "treat_disease")
+
+
+@game_bp.post("/players/<player_id>/pods/<pod_id>/weather")
+@require_player
+def roll_weather(player_id, pod_id):
+    data = request.get_json(force=True, silent=True) or {}
+    rng_seed = data.get("rng_seed")
+    try:
+        with session_scope() as s:
+            payload = WeatherService(s).roll(
+                player_id, pod_id,
+                event=data.get("event"),
+                rng_seed=int(rng_seed) if rng_seed is not None else None,
+            )
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
 
 
 @game_bp.post("/players/<player_id>/pods/<pod_id>/environment")

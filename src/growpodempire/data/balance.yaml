@@ -132,6 +132,22 @@ simulation:
     water_amount: 35
     feed_amount: 30
 
+  # Random weather events that shift a pod's environment (then feed the sim).
+  # Deltas are applied to the current snapshot; `set_*` overrides absolutely.
+  weather:
+    events:
+      heatwave:       {weight: 2, temperature: 7,  humidity: -12}
+      cold_snap:      {weight: 2, temperature: -7, humidity: 6}
+      humidity_spike: {weight: 2, humidity: 20}
+      dry_spell:      {weight: 2, humidity: -20}
+      ideal:          {weight: 1, set_temperature: 24, set_humidity: 50, set_ph_level: 6.5}
+    clamps:
+      temperature: [10, 40]
+      humidity: [10, 95]
+      co2_level: [300, 2000]
+      light_intensity: [0, 1000]
+      ph_level: [4.0, 9.0]
+
 # Retention loop: a once-per-24h login stipend and one-time achievement rewards.
 progression:
   daily_cooldown_hours: 22       # claim window (slightly under 24h is forgiving)
