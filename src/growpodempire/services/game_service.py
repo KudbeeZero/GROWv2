@@ -197,6 +197,24 @@ class GameService:
             .all()
         )
 
+    def list_pods(self, player_id: str) -> List[GrowPod]:
+        self.get_player(player_id)  # 404 cleanly for unknown players
+        return (
+            self.session.query(GrowPod)
+            .filter(GrowPod.player_id == player_id)
+            .order_by(GrowPod.name)
+            .all()
+        )
+
+    def list_plants(self, player_id: str) -> List[Plant]:
+        self.get_player(player_id)
+        return (
+            self.session.query(Plant)
+            .filter(Plant.player_id == player_id)
+            .order_by(Plant.planted_at.desc())
+            .all()
+        )
+
     def buy_seed(self, player_id: str, strain_id: str, quantity: int = 1) -> SeedInventory:
         if quantity < 1:
             raise GameError("quantity must be >= 1")

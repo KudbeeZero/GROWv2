@@ -118,6 +118,32 @@ def test_harvest_sells_and_credits(db):
         assert s.get(Plant, plant.id).harvested is True
 
 
+def test_list_pods_and_plants_for_player(db):
+    with session_scope() as s:
+        svc = GameService(s)
+        p = svc.create_player("lister")
+        strain = _strain(s, "white-widow")
+        stack = svc.buy_seed(p.id, strain.id, quantity=2)
+        pod = svc.create_pod(p.id, "Tent A", capacity=2, charge=False)
+        plant = svc.plant_seed(p.id, stack.id, pod.id)
+
+        pods = svc.list_pods(p.id)
+        plants = svc.list_plants(p.id)
+        assert [x.id for x in pods] == [pod.id]
+        assert [x.id for x in plants] == [plant.id]
+
+        # Another player's resources are isolated.
+        other = svc.create_player("outsider")
+        assert svc.list_pods(other.id) == []
+        assert svc.list_plants(other.id) == []
+
+
+def test_list_pods_unknown_player_raises(db):
+    with session_scope() as s:
+        with pytest.raises(GameError):
+            GameService(s).list_pods("does-not-exist")
+
+
 def test_marketplace_transfers_seeds_and_currency(db):
     with session_scope() as s:
         svc = GameService(s)
