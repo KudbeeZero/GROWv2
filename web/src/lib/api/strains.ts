@@ -18,7 +18,8 @@ export const strains = {
 
   get: (strainId: string) => apiFetch<Strain>(`/strains/${strainId}`),
 
-  favorites: (playerId: string) => apiFetch<Strain[]>(`/players/${playerId}/favorites`),
+  favorites: (playerId: string) =>
+    apiFetch<Strain[]>(`/players/${playerId}/favorites`, { auth: true }),
 
   addFavorite: (playerId: string, strainId: string) =>
     apiFetch<{ favorited: boolean }>(
@@ -32,10 +33,10 @@ export const strains = {
       { method: "DELETE" },
     ),
 
-  stabilize: (playerId: string, strainId: string, rng_seed?: number) =>
+  // Stabilization RNG seed is server-generated (anti seed-shopping).
+  stabilize: (playerId: string, strainId: string) =>
     apiFetch<Strain>(`/players/${playerId}/strains/${strainId}/stabilize`, {
       method: "POST",
-      body: { rng_seed },
     }),
 
   mint: (playerId: string, strainId: string) =>

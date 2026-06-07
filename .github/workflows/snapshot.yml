@@ -1,0 +1,65 @@
+name: Daily Snapshot
+
+# Captures a daily backup of the game DB + balance/strains lookup tables and
+# uploads it as a workflow artifact. Runs once a day (UTC) and on demand.
+on:
+  schedule:
+    # 07:17 UTC every day (off the top of the hour to dodge scheduler congestion).
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+# Avoid overlapping snapshot runs.
+concurrency:
+  group: daily-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
+      # Set a DATABASE_URL repository/environment secret to snapshot the real
+      # (production) database. If unset, the job falls back to a freshly
+      # migrated+seeded SQLite DB so the workflow still validates end-to-end.
+      PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SNAPSHOT_RETENTION_DAYS: "30"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Postgres client (for pg_dump)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Resolve database (prod secret, else seeded SQLite fallback)
+        run: |
+          if [ -n "$PROD_DATABASE_URL" ]; then
+            echo "Using configured DATABASE_URL secret."
+            echo "DATABASE_URL=$PROD_DATABASE_URL" >> "$GITHUB_ENV"
+          else
+            echo "No DATABASE_URL secret set — using a seeded SQLite fallback."
+            echo "DATABASE_URL=sqlite:///snapshot_ci.db" >> "$GITHUB_ENV"
+            export DATABASE_URL=sqlite:///snapshot_ci.db
+            alembic upgrade head
+            python -m growpodempire.db.seed
+          fi
+
+      - name: Create snapshot
+        run: python -m growpodempire.scripts.snapshot --out snapshots --retention-days "$SNAPSHOT_RETENTION_DAYS"
+
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-snapshot-${{ github.run_id }}
+          path: snapshots/*.tar.gz
+          retention-days: 30
+          if-no-files-found: error
