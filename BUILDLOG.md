@@ -12,3 +12,5 @@ Chronological record of what shipped on the trunk
 Each entry: branch · what shipped · test count after merge.
 
 - `docs/roadmap` · 90-day roadmap (`docs/ROADMAP.md`) + this build log · 79 tests.
+- `feature/daily-stipend-quests` (merged) · daily login stipend + achievement rewards · 81 tests.
+- `feature/player-leveling` (merged) · XP/levels awarded on harvest/breed/mint · 81 tests.
