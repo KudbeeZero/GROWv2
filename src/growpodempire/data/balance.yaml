@@ -1,0 +1,62 @@
+# GrowPodEmpire economy tuning. ALL economic constants live here so balance can
+# be adjusted without code changes. Values are in the in-game currency (GROW),
+# which later maps 1:1 to an Algorand ASA (decimals = 6).
+
+currency:
+  name: GROW
+  symbol: GC
+  decimals: 6
+
+# One-time grant credited when a player account is created (a faucet).
+starting_balance: 500
+# Small, fixed login bonus (retention faucet, intentionally not a wealth pump).
+daily_stipend: 50
+
+seeds:
+  base_cost: 25            # price of a COMMON seed
+  rarity_multiplier:
+    common: 1.0
+    uncommon: 2.5
+    rare: 6.0
+    epic: 15.0
+    legendary: 40.0
+
+nutrients:
+  per_application: 5
+
+pest_treatment:
+  per_application: 15
+
+disease_treatment:
+  per_application: 20
+
+pods:
+  basic: 100
+  standard: 400
+  pro: 1200
+
+breeding:
+  base_fee: 75
+  # Extra fee scales with the average rarity tier of the two parents.
+  rarity_fee_per_tier: 40
+
+# Selling a harvest to the NPC market (a faucet, gated by real grow time).
+harvest_sale:
+  base_price_per_gram: 2.0
+  quality_curve_exponent: 1.5     # rewards high quality non-linearly
+  rarity_multiplier:
+    common: 1.0
+    uncommon: 1.4
+    rare: 2.2
+    epic: 4.0
+    legendary: 8.0
+  thc_bonus_per_pct_over_15: 0.04  # +4% value per THC point above 15%
+  # Diminishing returns: grams above the soft cap are worth less per gram.
+  soft_cap_grams: 120
+  soft_cap_factor: 0.6
+
+# Player-to-player marketplace. Fees/taxes are GROW sinks (burned) to fight
+# inflation.
+market:
+  listing_fee_pct: 0.03   # charged to the seller at listing time
+  sale_tax_pct: 0.05      # withheld from the seller's proceeds on a sale

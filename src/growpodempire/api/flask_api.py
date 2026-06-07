@@ -8,29 +8,39 @@ from flask_cors import CORS
 from datetime import datetime
 from ..app import GrowPodEmpire
 from ..models import EnvironmentalCondition, GrowthStage
+from ..db.session import init_db
+from .game_api import game_bp
 
 
-def create_app():
+def create_app(init_database: bool = True):
     """Create and configure Flask application"""
     app = Flask(__name__)
     CORS(app)
-    
-    # Initialize GrowPodEmpire
+
+    # Ensure the persistent game schema exists (no-op for already-migrated DBs).
+    if init_database:
+        init_db()
+
+    # DB-backed game layer (players, economy, strains, breeding, market).
+    app.register_blueprint(game_bp)
+
+    # Initialize GrowPodEmpire (legacy in-memory cultivation tracker).
     empire = GrowPodEmpire()
-    
+
     @app.route('/')
     def index():
         """API root endpoint"""
         return jsonify({
             "name": "GrowPodEmpire API",
-            "version": "1.0.0",
-            "description": "Professional Cannabis Cultivation Management Platform",
+            "version": "2.0.0",
+            "description": "Cannabis cultivation game: economy, genetics & on-chain assets",
             "endpoints": {
                 "pods": "/api/pods",
                 "plants": "/api/plants",
                 "environment": "/api/environment",
                 "blockchain": "/api/blockchain",
-                "stats": "/api/stats"
+                "stats": "/api/stats",
+                "game": "/api/game"
             }
         })
     

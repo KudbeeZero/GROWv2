@@ -1,7 +1,14 @@
 flask==2.3.2
+# Pin Werkzeug to the 2.3.x line; Flask 2.3.2 is incompatible with Werkzeug 3.x.
+werkzeug==2.3.7
 flask-cors==4.0.0
 sqlalchemy==2.0.23
+alembic==1.13.2
 pydantic==2.5.0
 python-dotenv==1.0.0
+PyYAML==6.0.2
 numpy==2.0.3
 pandas==2.3.5
+# Postgres driver for production (Render). Local/dev/test default to SQLite and
+# do not require this; safe to skip if the binary wheel is unavailable.
+psycopg2-binary==2.9.9
