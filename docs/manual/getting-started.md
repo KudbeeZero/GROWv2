@@ -172,7 +172,7 @@ curl -s -X POST .../plants/$PLANT/treat-disease -H "X-API-Key: $KEY"
 
 > ⚠️ **Don't drown it.** Water *decays ~1.5/hr*; nutrients *~1.0/hr*. Topping up
 > too often pushes you past **88 (overwatered)** → **96 (root rot)**. Patience
-> beats panic. Full thresholds: **[Game Manual → Simulation](game-manual.md#-the-grow-simulation)**.
+> beats panic. Full thresholds: **[Game Manual → Simulation](game-manual.md#9--the-grow-simulation)**.
 
 ### 7. Harvest → sell → get paid
 

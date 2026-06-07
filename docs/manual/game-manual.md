@@ -528,7 +528,7 @@ unchanged (no double-mint); a chain failure marks the row `FAILED`.
 
 Out of the box the game uses an offline **mock chain** (no funds, no secrets). To
 mint for real on TestNet, set a funded treasury mnemonic and ASA config — see
-**[Tokenomics → Going on-chain](tokenomics.md#-going-on-chain-testnet)** and
+**[Tokenomics → Going on-chain](tokenomics.md#7--going-on-chain-testnet)** and
 [`docs/PHASE3_ONCHAIN.md`](../PHASE3_ONCHAIN.md).
 
 > The legacy hand-rolled SHA-256 `blockchain/` is **superseded** by real Algorand
