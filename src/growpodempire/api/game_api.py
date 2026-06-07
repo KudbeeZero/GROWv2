@@ -17,6 +17,7 @@ from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
 from ..services.contract_service import ContractService
+from ..services.research_service import ResearchService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
@@ -116,6 +117,7 @@ def leaderboards(board):
         "breeders": "top_breeders",
         "harvests": "biggest_harvesters",
         "level": "top_levels",
+        "researchers": "top_researchers",
     }
     if board not in boards:
         return _error(f"Unknown leaderboard '{board}'", 404)
@@ -352,6 +354,122 @@ def harvest(player_id, plant_id):
         return _error(str(e))
 
 
+# ----- Harvests: inventory, curing, sale ---------------------------------
+@game_bp.get("/players/<player_id>/harvests")
+@require_player
+def list_harvests(player_id):
+    with session_scope() as s:
+        harvests = GameService(s).list_harvests(player_id)
+        payload = [S.harvest_dict(h) for h in harvests]
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/cure")
+@require_player
+def start_cure(player_id, harvest_id):
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        with session_scope() as s:
+            h = GameService(s).start_cure(
+                player_id, harvest_id, target_hours=data.get("target_hours")
+            )
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/cure/finish")
+@require_player
+def finish_cure(player_id, harvest_id):
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        with session_scope() as s:
+            h = GameService(s).finish_cure(
+                player_id, harvest_id, sell=bool(data.get("sell", False))
+            )
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/harvests/<harvest_id>/sell")
+@require_player
+def sell_harvest(player_id, harvest_id):
+    try:
+        with session_scope() as s:
+            h = GameService(s).sell_harvest(player_id, harvest_id)
+            payload = S.harvest_dict(h)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e))
+
+
+# ----- Research tree & shop ----------------------------------------------
+@game_bp.get("/players/<player_id>/research")
+@require_player
+def research_tree(player_id):
+    with session_scope() as s:
+        tree = ResearchService(s).list_tree(player_id)
+    return jsonify(tree)
+
+
+@game_bp.post("/players/<player_id>/research/<node_key>/unlock")
+@require_player
+def research_unlock(player_id, node_key):
+    try:
+        with session_scope() as s:
+            svc = ResearchService(s)
+            svc.unlock(player_id, node_key)
+            tree = svc.list_tree(player_id)
+        return jsonify(tree), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.get("/players/<player_id>/shop")
+@require_player
+def shop_list(player_id):
+    with session_scope() as s:
+        items = GameService(s).list_consumables(player_id)
+    return jsonify(items)
+
+
+@game_bp.post("/players/<player_id>/shop/buy")
+@require_player
+def shop_buy(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    item_key = data.get("item_key")
+    if not item_key:
+        return _error("item_key is required")
+    qty = bounded_int(data.get("quantity", 1), "quantity", default=1, low=1, high=99)
+    try:
+        with session_scope() as s:
+            svc = GameService(s)
+            svc.buy_consumable(player_id, item_key, qty)
+            items = svc.list_consumables(player_id)
+        return jsonify(items), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/apply")
+@require_player
+def apply_consumable(player_id, plant_id):
+    data = request.get_json(force=True, silent=True) or {}
+    item_key = data.get("item_key")
+    if not item_key:
+        return _error("item_key is required")
+    try:
+        with session_scope() as s:
+            plant = SimulationService(s).apply_consumable(player_id, plant_id, item_key)
+            payload = S.plant_dict(plant)
+        return jsonify(payload)
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
 # ----- Simulation (real-time grow) ---------------------------------------
 @game_bp.get("/players/<player_id>/plants/<plant_id>/state")
 @require_player
@@ -367,6 +485,59 @@ def plant_state(player_id, plant_id):
         return jsonify(payload)
     except GameError as e:
         return _error(str(e), 404)
+
+
+@game_bp.get("/players/<player_id>/plants/<plant_id>/advisor")
+@require_player
+@limiter.limit("20 per minute")
+def plant_advisor(player_id, plant_id):
+    """AI 'Master Grower' diagnosis + care recommendations for a plant.
+
+    Read-only: runs the sim catch-up, then asks the configured advisor provider
+    (real Claude when ANTHROPIC_API_KEY is set, else the offline mock).
+    """
+    from ..services.advisor_service import AdvisorService
+    from ..ai.provider import AdvisorError
+
+    try:
+        with session_scope() as s:
+            advisor = AdvisorService(s)
+            report = advisor.advise(player_id, plant_id)
+            payload = {"provider": advisor.provider.name(), **report.model_dump()}
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+    except AdvisorError as e:
+        return _error(f"Advisor unavailable: {e}", 503)
+
+
+@game_bp.post("/players/<player_id>/plants/<plant_id>/advisor/auto-care")
+@require_player
+@limiter.limit("10 per minute")
+def plant_auto_care(player_id, plant_id):
+    """Agentic auto-care: the AI calls care actions itself within a GROW budget
+    and action cap. Every action posts to the ledger like a manual one."""
+    from ..config import get_settings
+    from ..services.autocare_service import AutoCareService
+    from ..ai.autocare import AutoCareError
+
+    if not get_settings().enable_auto_care:
+        return _error("Auto-care is disabled", 403)
+
+    data = request.get_json(force=True, silent=True) or {}
+    budget = data.get("budget")
+    max_actions = data.get("max_actions")
+    try:
+        with session_scope() as s:
+            result = AutoCareService(s).run(
+                player_id, plant_id, budget=budget, max_actions=max_actions
+            )
+            result["plant"] = S.plant_dict(result["plant"])
+        return jsonify(result)
+    except GameError as e:
+        return _error(str(e), 404)
+    except (AutoCareError, InsufficientFundsError) as e:
+        return _error(f"Auto-care failed: {e}", 503)
 
 
 @game_bp.get("/plants/<plant_id>/events")

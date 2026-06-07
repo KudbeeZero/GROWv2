@@ -53,9 +53,23 @@ harvest_sale:
     epic: 4.0
     legendary: 8.0
   thc_bonus_per_pct_over_15: 0.04  # +4% value per THC point above 15%
+  # A strong dominant-terpene expression earns up to this fractional premium
+  # (e.g. 0.25 = +25% at a fully expressed terpene).
+  terpene_premium_max: 0.25
   # Diminishing returns: grams above the soft cap are worth less per gram.
   soft_cap_grams: 120
   soft_cap_factor: 0.6
+
+# Post-harvest drying/curing. An optional, time-gated step that raises a
+# harvest's quality (and therefore its sale value) — but over-drying erodes it.
+# Deterministic / compute-on-read; see simulation/curing.py.
+curing:
+  optimal_hours: 72          # ~3 days of cure for the peak quality bonus
+  default_target_hours: 72   # used when the player doesn't specify a target
+  max_target_hours: 336      # 2-week cap on a committed cure
+  max_quality_bonus: 10.0    # up to +10 quality at a perfect cure
+  over_dry_penalty_per_hour: 0.04
+  over_dry_grace_hours: 48   # forgiving window past optimal before erosion
 
 # Player-to-player marketplace. Fees/taxes are GROW sinks (burned) to fight
 # inflation.
@@ -185,6 +199,109 @@ contracts:
     - {rarity: common,   grams: 100, reward: 250, xp: 30, weight: 3}
     - {rarity: uncommon, grams: 80,  reward: 400, xp: 50, weight: 2}
     - {rarity: rare,     grams: 60,  reward: 700, xp: 90, weight: 1}
+
+# Research tree (Phase 2). Players spend GROW (gated by level + prerequisites) to
+# unlock permanent operation-wide upgrades. Effects aggregate ADDITIVELY across
+# all unlocked nodes and are applied in player-scoped service code (never inside
+# the pure simulation engine). Supported effect keys:
+#   yield_pct, quality_bonus, cure_bonus_pct, care_discount_pct,
+#   breeding_discount_pct, seed_discount_pct, terpene_pct,
+#   consumable_potency_pct, pod_capacity_bonus
+research:
+  nodes:
+    # --- Cultivation: raw output ---
+    hydroponics:
+      {name: "Hydroponics", branch: cultivation, cost: 400, level_req: 2,
+       requires: [], effects: {yield_pct: 0.08}, description: "+8% harvest yield"}
+    aeroponics:
+      {name: "Aeroponics", branch: cultivation, cost: 1200, level_req: 5,
+       requires: [hydroponics], effects: {yield_pct: 0.12}, description: "+12% harvest yield"}
+    co2_enrichment:
+      {name: "CO₂ Enrichment", branch: cultivation, cost: 2000, level_req: 8,
+       requires: [aeroponics], effects: {yield_pct: 0.15}, description: "+15% harvest yield"}
+    # --- Horticulture: quality & curing ---
+    nutrient_science:
+      {name: "Nutrient Science", branch: horticulture, cost: 500, level_req: 3,
+       requires: [], effects: {quality_bonus: 4}, description: "+4 harvest quality"}
+    slow_cure_mastery:
+      {name: "Slow-Cure Mastery", branch: horticulture, cost: 900, level_req: 4,
+       requires: [nutrient_science], effects: {cure_bonus_pct: 0.4}, description: "+40% curing quality bonus"}
+    master_curing:
+      {name: "Master Curing", branch: horticulture, cost: 1800, level_req: 7,
+       requires: [slow_cure_mastery], effects: {quality_bonus: 5, cure_bonus_pct: 0.4},
+       description: "+5 quality and +40% more curing bonus"}
+    # --- Defense: cost efficiency & consumable potency ---
+    ipm_basics:
+      {name: "IPM Basics", branch: defense, cost: 350, level_req: 2,
+       requires: [], effects: {care_discount_pct: 0.2}, description: "-20% nutrient/pest/disease cost"}
+    biocontrol_lab:
+      {name: "Biocontrol Lab", branch: defense, cost: 1100, level_req: 5,
+       requires: [ipm_basics], effects: {care_discount_pct: 0.2, consumable_potency_pct: 0.25},
+       description: "-20% more care cost and +25% consumable potency"}
+    # --- Genetics: breeding & terpenes ---
+    tissue_culture:
+      {name: "Tissue Culture", branch: genetics, cost: 600, level_req: 3,
+       requires: [], effects: {breeding_discount_pct: 0.25}, description: "-25% breeding fee"}
+    terpene_profiling:
+      {name: "Terpene Profiling", branch: genetics, cost: 1000, level_req: 5,
+       requires: [tissue_culture], effects: {terpene_pct: 0.15}, description: "+15% terpene expression"}
+    marker_breeding:
+      {name: "Marker-Assisted Breeding", branch: genetics, cost: 2200, level_req: 9,
+       requires: [terpene_profiling], effects: {breeding_discount_pct: 0.25, terpene_pct: 0.1},
+       description: "-25% more breeding fee and +10% terpenes"}
+    # --- Operations: economy & scale ---
+    bulk_supplier:
+      {name: "Bulk Supplier", branch: operations, cost: 450, level_req: 2,
+       requires: [], effects: {seed_discount_pct: 0.15}, description: "-15% seed cost"}
+    vertical_racking:
+      {name: "Vertical Racking", branch: operations, cost: 1500, level_req: 6,
+       requires: [bulk_supplier], effects: {pod_capacity_bonus: 2}, description: "+2 capacity on new pods"}
+    automation_suite:
+      {name: "Automation Suite", branch: operations, cost: 2500, level_req: 10,
+       requires: [vertical_racking], effects: {pod_capacity_bonus: 2, care_discount_pct: 0.15},
+       description: "+2 pod capacity and -15% care cost"}
+  # XP awarded per research unlock.
+  xp_per_unlock: 30
+  # Flat quality cap so stacked bonuses can't exceed a realistic ceiling.
+  max_quality: 100
+
+# Equipment / consumables shop (Phase 2). One-shot boosters that are GROW sinks.
+# Effects manipulate a plant's existing simulated levels (so they flow through
+# the normal yield/quality math). `*_set` overrides a level; `*_add` adjusts it.
+# `consumable_potency_pct` research scales `health_add`. Levels clamp to 0..100.
+shop:
+  consumables:
+    cal_mag_boost:
+      {name: "Cal-Mag Boost", cost: 30, effects: {nutrient_set: 85, health_add: 4},
+       description: "Tops up nutrients and gives a small health boost"}
+    ladybugs:
+      {name: "Ladybugs (biocontrol)", cost: 45, effects: {pest_set: 0, health_add: 2},
+       description: "Biologically eliminates all pests"}
+    neem_oil:
+      {name: "Neem Oil", cost: 40, effects: {disease_set: 0, health_add: 2},
+       description: "Clears mildew and disease"}
+    bloom_booster:
+      {name: "Bloom Booster", cost: 60, stage_req: flowering, effects: {health_add: 10},
+       description: "Vigor boost during flowering (raises yield & quality via health)"}
+    rejuvenation_tonic:
+      {name: "Rejuvenation Tonic", cost: 80,
+       effects: {water_set: 70, nutrient_set: 70, pest_set: 0, disease_set: 0, health_add: 8},
+       description: "Full reset: waters, feeds, treats, and revitalizes a struggling plant"}
+
+# Seasonal / limited content (Phase 2). A strain whose `season` is "all" is
+# always buyable; otherwise it must match `current_season` (or be unlocked via a
+# limited event). Drives the seasonal-strain rotation + a future LiveOps console.
+events:
+  current_season: all   # all | spring | summer | fall | winter
+
+# Agentic AI auto-care (Phase 3b). The Master Grower can call care tools itself,
+# bounded per invocation by a GROW budget and a max number of actions. The spend
+# guard is the safety mechanism — every tool call still goes through the normal
+# ledger-posting care path (server-authoritative).
+auto_care:
+  default_budget: 200    # GROW the agent may spend per run if the caller omits one
+  max_budget: 1000       # hard ceiling on a requested budget
+  max_actions: 8         # max tool calls per run
 
 # On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
 # rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.

@@ -43,6 +43,30 @@ def test_auction_bidding_and_outbid_refund(db):
         assert auction.highest_bidder_id == b.id
 
 
+def test_later_bid_at_min_bid_is_rejected_once_floor_rises(db):
+    # Regression: a player must not be able to re-bid the opening min_bid (or any
+    # amount <= the standing high bid) after the floor has risen.
+    clock = FrozenClock(BASE)
+    with session_scope() as s:
+        svc, seller, stack = _seller_with_seed(s, clock)
+        a = svc.create_player("alice")
+        b = svc.create_player("bob")
+        auction = svc.create_seed_auction(seller.id, stack.id, 1, 50, duration_hours=24)
+
+        svc.place_bid(a.id, auction.id, 80)          # floor is now 80
+        before = balance(s, a.id)
+        # Re-bidding the original min_bid must fail and leave the auction untouched.
+        with pytest.raises(GameError):
+            svc.place_bid(b.id, auction.id, 50)
+        # Equalling the standing high bid must also fail.
+        with pytest.raises(GameError):
+            svc.place_bid(b.id, auction.id, 80)
+        assert auction.highest_bidder_id == a.id
+        assert auction.highest_bid == Decimal("80")
+        assert balance(s, a.id) == before            # not refunded
+        assert balance(s, b.id) == Decimal("500")    # never debited
+
+
 def test_settle_pays_seller_and_delivers_seed(db):
     clock = FrozenClock(BASE)
     with session_scope() as s:

@@ -1,12 +1,13 @@
 """
-Flask API for GrowPodEmpire
-RESTful API endpoints for the cultivation platform
+Flask API for GROWv2
+RESTful API endpoints for the cultivation game.
 """
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .. import __version__
 from ..config import get_settings
 from ..db.session import init_db
 from .game_api import game_bp
@@ -14,7 +15,6 @@ from .errors import register_error_handlers
 from .observability import register_observability
 from .openapi import register_openapi
 from .ratelimit import init_limiter
-from .legacy_api import register_legacy_endpoints
 
 
 def create_app(init_database: bool = True):
@@ -61,19 +61,14 @@ def create_app(init_database: bool = True):
     def index():
         """API root endpoint"""
         return jsonify({
-            "name": "GrowPodEmpire API",
-            "version": "3.0.0",
+            "name": "GROWv2 API",
+            "version": __version__,
             "description": "Cannabis cultivation game: economy, genetics, real-time sim & on-chain assets",
             "endpoints": {
                 "game": "/api/game",
                 "docs": "/docs",
             }
         })
-
-    # Legacy in-memory cultivation endpoints (unauthenticated, non-economy).
-    # Off by default; opt in only with ENABLE_LEGACY_API=true.
-    if settings.enable_legacy_api:
-        register_legacy_endpoints(app)
 
     return app
 

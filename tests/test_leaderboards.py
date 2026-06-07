@@ -55,3 +55,28 @@ def test_breeders_and_level_leaderboards(db):
         levels = lb.top_levels()
         # breeder has XP from breeding; idler has none -> breeder ranks first
         assert levels[0]["username"] == "breeder"
+
+
+def test_researchers_leaderboard(db):
+    from decimal import Decimal
+    from growpodempire.economy.ledger import post
+    from growpodempire.enums import LedgerEntryType
+    from growpodempire.services import leveling_service
+    from growpodempire.economy.config import get_economy_config
+    from growpodempire.services.research_service import ResearchService
+
+    with session_scope() as s:
+        svc = GameService(s)
+        scholar = svc.create_player("scholar")
+        scholar.xp = leveling_service.xp_for_level(10, get_economy_config())
+        scholar.level = 10
+        post(s, scholar.id, Decimal("10000"), LedgerEntryType.REWARD, ref_type="t")
+        svc.create_player("rookie")
+        s.flush()
+
+        rs = ResearchService(s)
+        rs.unlock(scholar.id, "hydroponics")
+        rs.unlock(scholar.id, "ipm_basics")
+
+        board = LeaderboardService(s).top_researchers()
+        assert board[0]["username"] == "scholar" and board[0]["value"] == 2

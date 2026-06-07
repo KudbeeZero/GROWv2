@@ -35,6 +35,16 @@ def quality_factor(quality: float, cfg: EconomyConfig) -> float:
     return 0.5 + 0.5 * (q ** exponent)
 
 
+def terpene_bonus(terpene_intensity: float, cfg: EconomyConfig) -> float:
+    """A multiplier (>= 1.0) rewarding a strong dominant-terpene expression.
+
+    `terpene_intensity` is the strongest expressed terpene (0..1); a fully
+    expressed terpene earns up to `harvest_sale.terpene_premium_max`.
+    """
+    premium_max = float(cfg.harvest.get("terpene_premium_max", 0.0))
+    return 1.0 + premium_max * max(0.0, min(1.0, terpene_intensity))
+
+
 def harvest_value(
     weight_g: float,
     quality: float,
@@ -42,10 +52,12 @@ def harvest_value(
     cfg: EconomyConfig,
     *,
     thc_actual: float = 15.0,
+    terpene_intensity: float = 0.0,
 ) -> Decimal:
     """Sale value of a harvest at the NPC market.
 
-    value = effective_weight * base_per_gram * rarity_mult * thc_bonus * quality
+    value = effective_weight * base_per_gram * rarity_mult * thc_bonus
+            * terpene_bonus * quality
     where weight above the soft cap yields diminishing marginal value.
     """
     rarity = Rarity(rarity).value if not isinstance(rarity, str) else rarity
@@ -69,6 +81,7 @@ def harvest_value(
         * base_per_gram
         * rarity_mult
         * thc_bonus
+        * terpene_bonus(terpene_intensity, cfg)
         * quality_factor(quality, cfg)
     )
     return to_money(value)

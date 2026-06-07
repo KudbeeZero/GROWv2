@@ -19,7 +19,7 @@ from ..economy.config import get_economy_config, EconomyConfig
 from ..economy.ledger import post, to_money, get_wallet
 from ..enums import LedgerEntryType
 from ..db.models import Player, LedgerEntry
-from ..chain.provider import ChainProvider, ChainError
+from ..chain.provider import ChainProvider, ChainError, TREASURY
 from ..chain.factory import shared_provider
 from ..chain.token import create_token_asa
 from .game_service import GameError
@@ -121,7 +121,7 @@ class SettlementService:
 
         try:
             txid = self.provider.transfer_asset(
-                self.asset_id, "TREASURY", self._base_units(amount)
+                self.asset_id, TREASURY, self._base_units(amount)
             )
         except ChainError as exc:
             raise GameError(f"On-chain transfer failed: {exc}") from exc

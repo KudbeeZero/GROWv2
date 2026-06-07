@@ -33,6 +33,12 @@ class TraitSpec:
         return self.high - self.low
 
 
+# Quantitative terpene intensities (0..1) that inherit through breeding and are
+# expressed on a harvest. Their qualitative names also drive flavour/effect copy.
+TERPENE_TRAITS = ("myrcene", "limonene", "caryophyllene", "pinene")
+_TERPENE_BASELINE = 0.12   # a terpene the strain doesn't lead with
+_TERPENE_PRESENT = 0.70    # a terpene listed in the catalog's `terpenes` tags
+
 # Visible traits drive display stats; hidden traits (resistances/vigor) feed the
 # Phase 2 simulation but still inherit through breeding.
 TRAIT_SPECS: Dict[str, TraitSpec] = {
@@ -45,6 +51,8 @@ TRAIT_SPECS: Dict[str, TraitSpec] = {
     "disease_resistance": TraitSpec(0.0, 1.0, 0.12),
     "pest_resistance": TraitSpec(0.0, 1.0, 0.12),
     "vigor": TraitSpec(0.0, 1.0, 0.10),
+    # Terpenes segregate a bit more widely than other 0..1 traits.
+    **{t: TraitSpec(0.0, 1.0, 0.14) for t in TERPENE_TRAITS},
 }
 
 # Sensible defaults for hidden traits when a catalog entry omits them.
@@ -52,7 +60,29 @@ HIDDEN_TRAIT_DEFAULTS = {
     "disease_resistance": 0.5,
     "pest_resistance": 0.5,
     "vigor": 0.5,
+    **{t: _TERPENE_BASELINE for t in TERPENE_TRAITS},
 }
+
+
+def terpene_genes_from_tags(tags) -> Dict[str, float]:
+    """Map a catalog strain's qualitative `terpenes` tags to quantitative gene
+    values: a listed terpene leads (high), the rest sit at a low baseline. This
+    lets the existing tag data seed the genome; breeding then varies it."""
+    present = {str(t).lower() for t in (tags or [])}
+    return {
+        t: (_TERPENE_PRESENT if t in present else _TERPENE_BASELINE)
+        for t in TERPENE_TRAITS
+    }
+
+
+def express_terpenes(genome: Dict, vigor_factor: float = 1.0) -> Dict[str, float]:
+    """Expressed terpene vector for a harvest: the genome's terpene intensities
+    scaled by how well the plant was grown (`vigor_factor`, ~0.85..1.0)."""
+    g = normalize_genome(genome)
+    spec = TRAIT_SPECS[TERPENE_TRAITS[0]]
+    return {
+        t: round(spec.clamp(g[t]["value"] * vigor_factor), 4) for t in TERPENE_TRAITS
+    }
 
 
 def normalize_genome(genome: Dict) -> Dict[str, Dict]:

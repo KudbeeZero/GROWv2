@@ -70,6 +70,30 @@ class EconomyConfig:
     def market(self) -> Dict[str, Any]:
         return self.raw["market"]
 
+    @property
+    def curing(self) -> Dict[str, Any]:
+        return self.raw.get("curing", {})
+
+    @property
+    def research(self) -> Dict[str, Any]:
+        return self.raw.get("research", {})
+
+    @property
+    def research_nodes(self) -> Dict[str, Any]:
+        return self.research.get("nodes", {})
+
+    @property
+    def shop_consumables(self) -> Dict[str, Any]:
+        return self.raw.get("shop", {}).get("consumables", {})
+
+    @property
+    def current_season(self) -> str:
+        return self.raw.get("events", {}).get("current_season", "all")
+
+    @property
+    def auto_care(self) -> Dict[str, Any]:
+        return self.raw.get("auto_care", {})
+
 
 def load_economy_config(path: Optional[str] = None) -> EconomyConfig:
     """Load (uncached) an EconomyConfig from a YAML path."""

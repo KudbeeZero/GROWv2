@@ -637,11 +637,12 @@ Swagger UI at **`/docs`**.
 | `POST /players/<pid>/strains/<id>/mint` | Mint a stabilized rare strain NFT |
 | `GET /nft/<kind>/<id>.json` | Serve the ARC-3 metadata |
 
-### Legacy (v1.0 cultivation tracker)
+### API reference
 
-The original in-memory endpoints (`/api/pods`, `/api/plants`, `/api/environment`,
-`/api/blockchain/*`) are still served for backward compatibility and are
-documented in [`API.md`](../../API.md). New work should use `/api/game/*`.
+The full REST surface is **self-describing and generated** — it never drifts
+from the code: `GET /openapi.json` for the OpenAPI 3 spec, and Swagger UI at
+`/docs`. The legacy v1.0 in-memory endpoints (`/api/pods`, `/api/plants`, …) have
+been removed; everything lives under `/api/game/*`.
 
 ### Health & ops
 

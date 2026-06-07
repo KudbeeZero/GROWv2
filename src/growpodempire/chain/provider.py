@@ -10,6 +10,13 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 
+# Sentinel "address" meaning the game treasury (the account that creates/holds
+# assets). Providers resolve it to their own treasury account: the mock keys its
+# balance book on this literal, and the real provider maps it to the treasury
+# Algorand address. Callers should use this constant rather than the bare string.
+TREASURY = "TREASURY"
+
+
 class ChainError(Exception):
     """Any failure interacting with the chain provider."""
 

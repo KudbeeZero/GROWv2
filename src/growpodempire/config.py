@@ -68,11 +68,6 @@ class Settings:
         self.ratelimit_default: str = os.environ.get(
             "RATELIMIT_DEFAULT", "240 per minute"
         )
-        # Legacy in-memory cultivation endpoints are unauthenticated and bypass
-        # the economy; keep them OFF unless explicitly enabled.
-        self.enable_legacy_api: bool = (
-            os.environ.get("ENABLE_LEGACY_API", "false").lower() == "true"
-        )
         # Cap on-chain withdrawals per player per rolling 24h (defence in depth
         # around the treasury). 0 disables the cap.
         wd_cap = os.environ.get("MAX_WITHDRAWAL_PER_DAY", "10000")
@@ -96,6 +91,23 @@ class Settings:
         # Force the offline mock chain even if a treasury is configured (tests/dev).
         self.use_mock_chain: bool = (
             os.environ.get("USE_MOCK_CHAIN", "false").lower() == "true"
+        )
+
+        # --- AI "Master Grower" advisor (greenfield) -----------------------
+        # The advisor reads a plant's live state and returns diagnosis + care
+        # recommendations. ANTHROPIC_API_KEY is a SECRET (host secret store
+        # only). With no key configured (or USE_MOCK_AI=true), an offline
+        # deterministic mock advisor is used, so the app and tests need no key.
+        self.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+        self.advisor_model: str = os.environ.get("ADVISOR_MODEL", "claude-opus-4-8")
+        self.use_mock_ai: bool = (
+            os.environ.get("USE_MOCK_AI", "false").lower() == "true"
+        )
+        # Agentic auto-care lets the advisor CALL care actions itself (spending
+        # in-game GROW within a per-invocation budget cap). On by default — the
+        # budget/action caps are the guardrail — but can be disabled outright.
+        self.enable_auto_care: bool = (
+            os.environ.get("ENABLE_AUTO_CARE", "true").lower() == "true"
         )
 
 

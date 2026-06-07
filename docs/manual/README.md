@@ -30,12 +30,12 @@ everything from your first plant to an on-chain empire. Start anywhere:
 ```
 New player ........  Lore  →  Getting Started  →  Strategy Guide
 Returning player ..  Strategy Guide  →  Strain Codex  →  Tokenomics
-Reference / builder  Game Manual  →  Glossary  →  ../../API.md
+Reference / builder  Game Manual  →  Glossary  →  /openapi.json (live)
 ```
 
 ### 🔗 Related engineering docs (outside this suite)
 
-- 🗺️ [Roadmap](../ROADMAP.md) · 🛠️ [API Reference](../../API.md) ·
+- 🗺️ [Roadmap](../ROADMAP.md) · 🛠️ API Reference: generated `GET /openapi.json` + Swagger UI at `/docs` ·
   [Phase 1 — Economy/DB](../PHASE1_ECONOMY_DB.md) ·
   [Phase 2 — Simulation](../PHASE2_SIMULATION.md) ·
   [Phase 3 — On-chain](../PHASE3_ONCHAIN.md)

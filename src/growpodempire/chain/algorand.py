@@ -12,7 +12,7 @@ tests use MockChainProvider so CI needs no network or funded account.
 
 from typing import Optional, Tuple
 
-from .provider import ChainProvider, AssetInfo, ChainError
+from .provider import ChainProvider, AssetInfo, ChainError, TREASURY
 
 _CONFIRM_ROUNDS = 6
 
@@ -91,6 +91,10 @@ class AlgorandProvider(ChainProvider):
         from algosdk import account
 
         sender_addr = account.address_from_private_key(sk)
+        # Resolve the TREASURY sentinel to the real treasury address so callers
+        # can use the provider-agnostic constant without leaking it on-chain.
+        if receiver == TREASURY:
+            receiver = self.treasury_addr
         sp = self.client.suggested_params()
         txn = transaction.AssetTransferTxn(
             sender=sender_addr, sp=sp, receiver=receiver, amt=amount, index=asset_id

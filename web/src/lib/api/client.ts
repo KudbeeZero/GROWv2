@@ -27,7 +27,13 @@ export class ApiError extends Error {
 
 function readApiKey(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(API_KEY_STORAGE);
+  // localStorage can throw (privacy mode, disabled storage, quota); never let
+  // that turn into an opaque request failure.
+  try {
+    return window.localStorage.getItem(API_KEY_STORAGE);
+  } catch {
+    return null;
+  }
 }
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";

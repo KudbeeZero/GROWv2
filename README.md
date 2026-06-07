@@ -26,8 +26,8 @@ an Algorand on-chain asset layer where your rarest strains become NFTs.
 <br/>
 
 ![Status](https://img.shields.io/badge/STATUS-IN__ORBIT-22C55E?style=for-the-badge&labelColor=0B0E2C)
-![Phase](https://img.shields.io/badge/BUILD-Phases_1--3_shipped-7C3AED?style=for-the-badge&labelColor=0B0E2C)
-![Tests](https://img.shields.io/badge/TESTS-125_green-22C55E?style=for-the-badge&labelColor=0B0E2C)
+![Phase](https://img.shields.io/badge/BUILD-Phases_1--3_+_expansion-7C3AED?style=for-the-badge&labelColor=0B0E2C)
+![Tests](https://img.shields.io/badge/TESTS-139_green-22C55E?style=for-the-badge&labelColor=0B0E2C)
 ![Chain](https://img.shields.io/badge/ALGORAND-TestNet-000000?style=for-the-badge&labelColor=0B0E2C)
 ![License](https://img.shields.io/badge/LICENSE-MIT-FACC15?style=for-the-badge&labelColor=0B0E2C)
 
@@ -113,10 +113,10 @@ The 90-day flight plan: sprints, exit criteria, and what ships next.
 </td>
 <td width="33%" valign="top">
 
-### 🛠️ [API Reference](API.md)
+### 🛠️ [API Reference](docs/manual/game-manual.md)
 **For builders & bots.**
-The raw REST surface. Pair it with the manual's API chapter to automate your
-whole operation.
+The REST surface — pair the manual's API chapter with the live, generated
+`GET /openapi.json` + Swagger UI at `/docs` to automate your whole operation.
 
 </td>
 </tr>
@@ -155,6 +155,11 @@ But cultivation is only the engine. The **game** is the loop around it:
   row with a balance snapshot. Faucets feed you; sinks fight inflation.
 - 💎 **On-chain ownership** — stabilize a rare line and mint it as an Algorand
   ARC-3 NFT. The DB stays authoritative; the chain is the trophy case.
+- 🤖 **AI Master Grower** — an advisor reads a plant's live state and recommends
+  care (and can run **agentic auto-care** within a spend cap). Powered by Claude
+  when a key is set, with an offline deterministic fallback.
+- 🌿 **Depth systems** — a post-harvest **curing** stage, **terpene** genetics, a
+  15-node **research tree**, a **consumables shop**, and **seasonal strains**.
 
 → Read the full story in the **[Lore](docs/manual/lore.md)**.
 
@@ -193,7 +198,7 @@ chapter. Full setup details live in **[Getting Started](docs/manual/getting-star
 | Pick the best strain to grow or breed | 🧬 [Strain Codex](docs/manual/strain-codex.md) |
 | Understand the money & the token | 🪙 [Tokenomics](docs/manual/tokenomics.md) |
 | Know what a word means | 📡 [Glossary](docs/manual/glossary.md) |
-| Automate with the API | 🛠️ [API Reference](API.md) |
+| Automate with the API | 🛠️ [Game Manual · API](docs/manual/game-manual.md) + `GET /openapi.json` |
 | See what's coming | 🗺️ [Roadmap](docs/ROADMAP.md) |
 
 ---

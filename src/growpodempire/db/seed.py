@@ -17,7 +17,7 @@ import yaml
 
 from ..config import get_settings
 from ..enums import Rarity, LineageType
-from ..genetics.traits import genome_from_traits
+from ..genetics.traits import genome_from_traits, terpene_genes_from_tags
 from ..genetics.breeding import derive_strain_fields
 from .models import Strain
 from .session import session_scope, init_db
@@ -29,7 +29,9 @@ def slugify(name: str) -> str:
 
 
 def _build_strain_kwargs(entry: Dict) -> Dict:
-    traits = entry["traits"]
+    # Seed quantitative terpene genes from the catalog's qualitative tags, unless
+    # the entry already declares explicit terpene trait values.
+    traits = {**terpene_genes_from_tags(entry.get("terpenes")), **entry["traits"]}
     dominant = {t: "dominant" for t in entry.get("dominant", [])}
     genome = genome_from_traits(traits, dominant)
     stability = float(entry.get("stability", 1.0))
@@ -44,6 +46,7 @@ def _build_strain_kwargs(entry: Dict) -> Dict:
         "slug": slugify(entry["name"]),
         "lineage_type": lineage,
         "rarity": rarity,
+        "season": entry.get("season", "all"),
         "terpenes": entry.get("terpenes", []),
         "genome": genome,
         "stability": stability,

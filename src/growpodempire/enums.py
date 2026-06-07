@@ -77,6 +77,8 @@ class LedgerEntryType(str, Enum):
     AUCTION_REFUND = "auction_refund"
     ASA_WITHDRAWAL = "asa_withdrawal"
     ASA_DEPOSIT = "asa_deposit"
+    RESEARCH_UNLOCK = "research_unlock"
+    SHOP_PURCHASE = "shop_purchase"
     ADJUSTMENT = "adjustment"
 
 

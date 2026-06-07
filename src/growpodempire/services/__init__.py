@@ -1,8 +1,1 @@
-"""
-Services package initialization
-"""
-
-from .growth_tracker import GrowthTracker
-from .environmental_monitor import EnvironmentalMonitor
-
-__all__ = ['GrowthTracker', 'EnvironmentalMonitor']
+"""Game service layer (game logic, simulation, economy, progression, chain)."""
