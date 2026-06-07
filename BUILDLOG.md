@@ -27,3 +27,4 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/weather-events` (merged) · random pod weather feeding the sim · 100 tests.
 - `feature/pod-automation` (merged) · pod tiers grant auto-water/feed honored by the sim · 103 tests.
 - `feature/strain-stabilization` (merged) · selfing raises stability over generations -> unlocks NFT mint · 106 tests.
+- `feature/asa-wallet-settlement` (merged) · GROW withdraw/deposit mirrors ledger <-> ASA · 110 tests.
