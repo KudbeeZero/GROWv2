@@ -3,12 +3,15 @@ import type { Contract } from "@/lib/types";
 
 export const contracts = {
   list: (playerId: string, status?: "open" | "fulfilled") =>
-    apiFetch<Contract[]>(`/players/${playerId}/contracts`, { query: { status } }),
+    apiFetch<Contract[]>(`/players/${playerId}/contracts`, {
+      auth: true,
+      query: { status },
+    }),
 
-  offer: (playerId: string, rng_seed?: number) =>
+  // Contract draw uses a server-generated RNG seed (no client seed-shopping).
+  offer: (playerId: string) =>
     apiFetch<Contract>(`/players/${playerId}/contracts/offer`, {
       method: "POST",
-      body: { rng_seed },
     }),
 
   fulfill: (playerId: string, contractId: string) =>

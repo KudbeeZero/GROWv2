@@ -46,6 +46,38 @@ class Settings:
 
         self.sql_echo: bool = os.environ.get("SQL_ECHO", "false").lower() == "true"
 
+        # --- Security / hardening -----------------------------------------
+        # Allowed browser origins for CORS. Comma-separated; defaults to the
+        # local web dev server. Set to the deployed web origin in production.
+        # "*" is honoured but strongly discouraged (kept only as an escape hatch).
+        self.cors_allowed_origins: list[str] = [
+            o.strip()
+            for o in os.environ.get(
+                "CORS_ALLOWED_ORIGINS", "http://localhost:3000"
+            ).split(",")
+            if o.strip()
+        ]
+        # Rate limiting: in-memory by default; point at Redis in production so
+        # limits hold across multiple workers/instances.
+        self.ratelimit_enabled: bool = (
+            os.environ.get("RATELIMIT_ENABLED", "true").lower() == "true"
+        )
+        self.ratelimit_storage_uri: str = os.environ.get(
+            "RATELIMIT_STORAGE_URI", "memory://"
+        )
+        self.ratelimit_default: str = os.environ.get(
+            "RATELIMIT_DEFAULT", "240 per minute"
+        )
+        # Legacy in-memory cultivation endpoints are unauthenticated and bypass
+        # the economy; keep them OFF unless explicitly enabled.
+        self.enable_legacy_api: bool = (
+            os.environ.get("ENABLE_LEGACY_API", "false").lower() == "true"
+        )
+        # Cap on-chain withdrawals per player per rolling 24h (defence in depth
+        # around the treasury). 0 disables the cap.
+        wd_cap = os.environ.get("MAX_WITHDRAWAL_PER_DAY", "10000")
+        self.max_withdrawal_per_day = wd_cap if wd_cap not in (None, "") else "0"
+
         # --- Algorand on-chain layer (Phase 3) -----------------------------
         # Default to TestNet via AlgoNode. The treasury mnemonic is a SECRET and
         # must be supplied via the host's secret store, never committed.

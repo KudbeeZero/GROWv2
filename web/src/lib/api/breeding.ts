@@ -2,11 +2,13 @@ import { apiFetch } from "./client";
 import type { Strain } from "@/lib/types";
 
 export const breeding = {
+  // The RNG seed is server-generated (anti seed-shopping); only an optional
+  // offspring name is client-supplied.
   breed: (
     playerId: string,
     parentAId: string,
     parentBId: string,
-    opts: { name?: string; rng_seed?: number } = {},
+    opts: { name?: string } = {},
   ) =>
     apiFetch<Strain>(`/players/${playerId}/breed`, {
       method: "POST",

@@ -2,10 +2,13 @@ import { apiFetch } from "./client";
 import type { Plant, PlantState, PlantEvent, Harvest } from "@/lib/types";
 
 export const plants = {
-  list: (playerId: string) => apiFetch<Plant[]>(`/players/${playerId}/plants`),
+  list: (playerId: string) =>
+    apiFetch<Plant[]>(`/players/${playerId}/plants`, { auth: true }),
 
   state: (playerId: string, plantId: string) =>
-    apiFetch<PlantState>(`/players/${playerId}/plants/${plantId}/state`),
+    apiFetch<PlantState>(`/players/${playerId}/plants/${plantId}/state`, {
+      auth: true,
+    }),
 
   events: (plantId: string, limit = 50) =>
     apiFetch<PlantEvent[]>(`/plants/${plantId}/events`, { query: { limit } }),
@@ -38,14 +41,12 @@ export const plants = {
       method: "POST",
     }),
 
-  harvest: (
-    playerId: string,
-    plantId: string,
-    opts: { weight_g?: number; quality?: number; sell?: boolean } = {},
-  ) =>
+  // Yield weight & quality are computed server-side from the plant's grown
+  // state; the client only chooses whether to immediately sell.
+  harvest: (playerId: string, plantId: string, opts: { sell?: boolean } = {}) =>
     apiFetch<Harvest>(`/players/${playerId}/plants/${plantId}/harvest`, {
       method: "POST",
-      body: opts,
+      body: { sell: opts.sell ?? true },
     }),
 
   mintHarvest: (playerId: string, harvestId: string) =>

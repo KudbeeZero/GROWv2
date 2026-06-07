@@ -10,7 +10,8 @@ export interface Environment {
 }
 
 export const pods = {
-  list: (playerId: string) => apiFetch<Pod[]>(`/players/${playerId}/pods`),
+  list: (playerId: string) =>
+    apiFetch<Pod[]>(`/players/${playerId}/pods`, { auth: true }),
 
   create: (
     playerId: string,
@@ -34,9 +35,9 @@ export const pods = {
       body: env,
     }),
 
-  rollWeather: (playerId: string, podId: string, event?: string, rng_seed?: number) =>
+  // Weather is fully server-randomised; the client cannot pick the event/seed.
+  rollWeather: (playerId: string, podId: string) =>
     apiFetch<Record<string, unknown>>(`/players/${playerId}/pods/${podId}/weather`, {
       method: "POST",
-      body: { event, rng_seed },
     }),
 };

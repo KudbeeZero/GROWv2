@@ -8,6 +8,7 @@ The DB ledger stays authoritative; this mirrors balances to the GROW ASA:
 Uses the configured chain provider (offline MockChainProvider by default).
 """
 
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional
 
@@ -17,7 +18,7 @@ from ..config import get_settings
 from ..economy.config import get_economy_config, EconomyConfig
 from ..economy.ledger import post, to_money, get_wallet
 from ..enums import LedgerEntryType
-from ..db.models import Player
+from ..db.models import Player, LedgerEntry
 from ..chain.provider import ChainProvider, ChainError
 from ..chain.factory import shared_provider
 from ..chain.token import create_token_asa
@@ -50,6 +51,34 @@ class SettlementService:
             raise GameError("amount must be positive")
         return amount
 
+    def _enforce_daily_cap(self, player_id: str, amount: Decimal) -> None:
+        """Block withdrawals that exceed the rolling-24h per-player cap.
+
+        Defence in depth around the treasury: even with a stolen API key, an
+        attacker can't drain more than the configured daily limit.
+        """
+        cap = to_money(self.settings.max_withdrawal_per_day)
+        if cap <= 0:  # cap disabled
+            return
+        since = datetime.now(timezone.utc) - timedelta(hours=24)
+        rows = (
+            self.session.query(LedgerEntry)
+            .filter(
+                LedgerEntry.player_id == player_id,
+                LedgerEntry.entry_type == LedgerEntryType.ASA_WITHDRAWAL.value,
+                LedgerEntry.created_at >= since,
+            )
+            .all()
+        )
+        # Withdrawal entries are negative; sum their magnitudes.
+        already = sum((-r.amount for r in rows), Decimal("0"))
+        if already + amount > cap:
+            remaining = cap - already
+            raise GameError(
+                f"Daily withdrawal limit reached (cap {cap}/24h, "
+                f"{remaining if remaining > 0 else 0} remaining)"
+            )
+
     def withdraw(self, player_id: str, amount) -> dict:
         amount = self._require_amount(amount)
         player = self.session.get(Player, player_id)
@@ -63,6 +92,10 @@ class SettlementService:
             self.session, player_id, -amount, LedgerEntryType.ASA_WITHDRAWAL,
             ref_type="asa", ref_id=str(self.asset_id),
         )
+        # Then enforce the rolling-24h treasury cap. The just-posted entry isn't
+        # flushed yet (autoflush is off), so it isn't double-counted; a violation
+        # raises and the surrounding transaction rolls the debit back.
+        self._enforce_daily_cap(player_id, amount)
         try:
             txid = self.provider.transfer_asset(
                 self.asset_id, player.algorand_address, self._base_units(amount)

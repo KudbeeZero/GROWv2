@@ -20,6 +20,8 @@ from ..services.contract_service import ContractService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
 from .auth import require_player
+from .ratelimit import limiter
+from .validation import positive_int, bounded_int, positive_money
 from . import serialize as S
 
 game_bp = Blueprint("game", __name__, url_prefix="/api/game")
@@ -36,6 +38,7 @@ def _handle_game_error(exc):  # pragma: no cover - registered per blueprint
 
 # ----- Players -----------------------------------------------------------
 @game_bp.post("/players")
+@limiter.limit("30 per hour")
 def create_player():
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("username"):
@@ -54,6 +57,7 @@ def create_player():
 
 
 @game_bp.get("/players/<player_id>")
+@require_player
 def get_player(player_id):
     try:
         with session_scope() as s:
@@ -73,6 +77,7 @@ def player_payload(player, wallet) -> dict:
 
 
 @game_bp.get("/players/<player_id>/wallet")
+@require_player
 def get_wallet(player_id):
     try:
         with session_scope() as s:
@@ -94,6 +99,7 @@ def get_level(player_id):
 
 
 @game_bp.get("/players/<player_id>/ledger")
+@require_player
 def get_ledger(player_id):
     with session_scope() as s:
         entries = GameService(s).get_ledger(player_id)
@@ -104,7 +110,7 @@ def get_ledger(player_id):
 # ----- Leaderboards ------------------------------------------------------
 @game_bp.get("/leaderboards/<board>")
 def leaderboards(board):
-    limit = int(request.args.get("limit", 10))
+    limit = bounded_int(request.args.get("limit"), "limit", default=10, low=1, high=100)
     boards = {
         "richest": "richest",
         "breeders": "top_breeders",
@@ -125,7 +131,12 @@ def list_strains():
 
     def _f(name):
         v = args.get(name)
-        return float(v) if v not in (None, "") else None
+        if v in (None, ""):
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            raise GameError(f"{name} must be a number")
 
     with session_scope() as s:
         strains = GameService(s).list_strains(
@@ -143,6 +154,7 @@ def list_strains():
 
 
 @game_bp.get("/players/<player_id>/favorites")
+@require_player
 def list_favorites(player_id):
     with session_scope() as s:
         strains = GameService(s).list_favorites(player_id)
@@ -181,6 +193,7 @@ def get_strain(strain_id):
 
 # ----- Seeds & planting --------------------------------------------------
 @game_bp.get("/players/<player_id>/seeds")
+@require_player
 def list_seeds(player_id):
     with session_scope() as s:
         seeds = GameService(s).get_seed_inventory(player_id)
@@ -189,6 +202,7 @@ def list_seeds(player_id):
 
 
 @game_bp.get("/players/<player_id>/pods")
+@require_player
 def list_pods(player_id):
     try:
         with session_scope() as s:
@@ -200,6 +214,7 @@ def list_pods(player_id):
 
 
 @game_bp.get("/players/<player_id>/plants")
+@require_player
 def list_plants(player_id):
     try:
         with session_scope() as s:
@@ -217,10 +232,9 @@ def buy_seed(player_id):
     if not data.get("strain_id"):
         return _error("strain_id is required")
     try:
+        quantity = positive_int(data.get("quantity", 1), "quantity")
         with session_scope() as s:
-            stack = GameService(s).buy_seed(
-                player_id, data["strain_id"], int(data.get("quantity", 1))
-            )
+            stack = GameService(s).buy_seed(player_id, data["strain_id"], quantity)
             payload = S.seed_dict(stack)
         return jsonify(payload), 201
     except (GameError, InsufficientFundsError) as e:
@@ -234,11 +248,12 @@ def create_pod(player_id):
     if not data.get("name"):
         return _error("name is required")
     try:
+        capacity = bounded_int(data.get("capacity"), "capacity", default=4, low=1, high=100)
         with session_scope() as s:
             pod = GameService(s).create_pod(
                 player_id,
                 data["name"],
-                int(data.get("capacity", 4)),
+                capacity,
                 data.get("tier", "basic"),
                 charge=bool(data.get("charge", True)),
             )
@@ -287,14 +302,14 @@ def breed(player_id):
     data = request.get_json(force=True, silent=True) or {}
     if not data.get("parent_a_id") or not data.get("parent_b_id"):
         return _error("parent_a_id and parent_b_id are required")
-    rng_seed = data.get("rng_seed")
+    # The RNG seed is generated server-side (see GameService.breed); accepting it
+    # from the client would let players "seed-shop" for ideal offspring.
     try:
         with session_scope() as s:
             offspring = GameService(s).breed(
                 player_id,
                 data["parent_a_id"],
                 data["parent_b_id"],
-                rng_seed=int(rng_seed) if rng_seed is not None else None,
                 offspring_name=data.get("name"),
             )
             payload = S.strain_dict(offspring)
@@ -307,14 +322,10 @@ def breed(player_id):
 @game_bp.post("/players/<player_id>/strains/<strain_id>/stabilize")
 @require_player
 def stabilize_strain(player_id, strain_id):
-    data = request.get_json(force=True, silent=True) or {}
-    rng_seed = data.get("rng_seed")
+    # RNG seed is server-generated (anti seed-shopping); not read from the body.
     try:
         with session_scope() as s:
-            strain = GameService(s).stabilize_strain(
-                player_id, strain_id,
-                rng_seed=int(rng_seed) if rng_seed is not None else None,
-            )
+            strain = GameService(s).stabilize_strain(player_id, strain_id)
             payload = S.strain_dict(strain)
         return jsonify(payload), 201
     except (GameError, InsufficientFundsError) as e:
@@ -325,13 +336,14 @@ def stabilize_strain(player_id, strain_id):
 @require_player
 def harvest(player_id, plant_id):
     data = request.get_json(force=True, silent=True) or {}
+    # Yield weight and quality are computed SERVER-SIDE from the plant's
+    # simulated health/genetics — never accepted from the client, or a player
+    # could mint unlimited currency. Only the sell flag is client-controlled.
     try:
         with session_scope() as s:
             h = GameService(s).harvest_plant(
                 player_id,
                 plant_id,
-                weight_g=data.get("weight_g"),
-                quality=data.get("quality"),
                 sell=bool(data.get("sell", True)),
             )
             payload = S.harvest_dict(h)
@@ -342,6 +354,7 @@ def harvest(player_id, plant_id):
 
 # ----- Simulation (real-time grow) ---------------------------------------
 @game_bp.get("/players/<player_id>/plants/<plant_id>/state")
+@require_player
 def plant_state(player_id, plant_id):
     """Return the plant's live simulated state (runs catch-up first)."""
     try:
@@ -358,7 +371,7 @@ def plant_state(player_id, plant_id):
 
 @game_bp.get("/plants/<plant_id>/events")
 def plant_events(plant_id):
-    limit = int(request.args.get("limit", 50))
+    limit = bounded_int(request.args.get("limit"), "limit", default=50, low=1, high=200)
     with session_scope() as s:
         events = SimulationService(s).get_events(plant_id, limit=limit)
         payload = [S.event_dict(e) for e in events]
@@ -405,15 +418,11 @@ def treat_disease(player_id, plant_id):
 @game_bp.post("/players/<player_id>/pods/<pod_id>/weather")
 @require_player
 def roll_weather(player_id, pod_id):
-    data = request.get_json(force=True, silent=True) or {}
-    rng_seed = data.get("rng_seed")
+    # Weather is fully server-randomised: neither the specific event nor the RNG
+    # seed is accepted from the client, so players can't force ideal conditions.
     try:
         with session_scope() as s:
-            payload = WeatherService(s).roll(
-                player_id, pod_id,
-                event=data.get("event"),
-                rng_seed=int(rng_seed) if rng_seed is not None else None,
-            )
+            payload = WeatherService(s).roll(player_id, pod_id)
         return jsonify(payload), 201
     except GameError as e:
         return _error(str(e))
@@ -456,12 +465,14 @@ def create_listing(player_id):
     if not all(k in data for k in required):
         return _error("seed_id, quantity, and unit_price are required")
     try:
+        quantity = positive_int(data.get("quantity"), "quantity")
+        unit_price = positive_money(data.get("unit_price"), "unit_price")
         with session_scope() as s:
             listing = GameService(s).create_seed_listing(
                 player_id,
                 data["seed_id"],
-                int(data["quantity"]),
-                data["unit_price"],
+                quantity,
+                unit_price,
             )
             payload = S.listing_dict(listing)
         return jsonify(payload), 201
@@ -477,10 +488,15 @@ def create_auction(player_id):
     if not all(k in data for k in required):
         return _error("seed_id, quantity, and min_bid are required")
     try:
+        quantity = positive_int(data.get("quantity"), "quantity")
+        min_bid = positive_money(data.get("min_bid"), "min_bid")
+        duration_hours = bounded_int(
+            data.get("duration_hours"), "duration_hours", default=24, low=1, high=168
+        )
         with session_scope() as s:
             listing = GameService(s).create_seed_auction(
-                player_id, data["seed_id"], int(data["quantity"]), data["min_bid"],
-                duration_hours=int(data.get("duration_hours", 24)),
+                player_id, data["seed_id"], quantity, min_bid,
+                duration_hours=duration_hours,
             )
             payload = S.listing_dict(listing)
         return jsonify(payload), 201
@@ -495,8 +511,9 @@ def place_bid(player_id, listing_id):
     if data.get("amount") is None:
         return _error("amount is required")
     try:
+        amount = positive_money(data.get("amount"), "amount")
         with session_scope() as s:
-            listing = GameService(s).place_bid(player_id, listing_id, data["amount"])
+            listing = GameService(s).place_bid(player_id, listing_id, amount)
             payload = S.listing_dict(listing)
         return jsonify(payload)
     except (GameError, InsufficientFundsError) as e:
@@ -530,6 +547,7 @@ def buy_listing(player_id, listing_id):
 # ----- Progression: daily stipend & achievements -------------------------
 @game_bp.post("/players/<player_id>/daily")
 @require_player
+@limiter.limit("30 per hour")
 def claim_daily(player_id):
     try:
         with session_scope() as s:
@@ -540,6 +558,7 @@ def claim_daily(player_id):
 
 
 @game_bp.get("/players/<player_id>/achievements")
+@require_player
 def list_achievements(player_id):
     with session_scope() as s:
         payload = ProgressionService(s).list_achievements(player_id)
@@ -559,6 +578,7 @@ def claim_achievement(player_id, key):
 
 # ----- Contracts ---------------------------------------------------------
 @game_bp.get("/players/<player_id>/contracts")
+@require_player
 def list_contracts(player_id):
     with session_scope() as s:
         contracts = ContractService(s).list_contracts(player_id, request.args.get("status"))
@@ -568,14 +588,13 @@ def list_contracts(player_id):
 
 @game_bp.post("/players/<player_id>/contracts/offer")
 @require_player
+@limiter.limit("60 per hour")
 def offer_contract(player_id):
-    data = request.get_json(force=True, silent=True) or {}
-    rng_seed = data.get("rng_seed")
+    # Contract template is drawn with a server-generated RNG seed (no client
+    # seed-shopping for the most lucrative contracts).
     try:
         with session_scope() as s:
-            contract = ContractService(s).offer(
-                player_id, rng_seed=int(rng_seed) if rng_seed is not None else None
-            )
+            contract = ContractService(s).offer(player_id)
             payload = S.contract_dict(contract)
         return jsonify(payload), 201
     except GameError as e:
@@ -616,8 +635,9 @@ def asa_withdraw(player_id):
     if data.get("amount") is None:
         return _error("amount is required")
     try:
+        amount = positive_money(data.get("amount"), "amount")
         with session_scope() as s:
-            payload = SettlementService(s).withdraw(player_id, data["amount"])
+            payload = SettlementService(s).withdraw(player_id, amount)
         return jsonify(payload), 201
     except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
@@ -630,8 +650,9 @@ def asa_deposit(player_id):
     if data.get("amount") is None:
         return _error("amount is required")
     try:
+        amount = positive_money(data.get("amount"), "amount")
         with session_scope() as s:
-            payload = SettlementService(s).deposit(player_id, data["amount"])
+            payload = SettlementService(s).deposit(player_id, amount)
         return jsonify(payload), 201
     except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
