@@ -32,3 +32,14 @@ Each entry: branch · what shipped · test count after merge.
 - `feature/market-auctions` (merged) · bid-based auctions with refunds + settlement · 117 tests.
 
 ### Wave 2 (gameplay depth) complete: search/favorites, leaderboards, auctions, weather, automation, stabilization, ASA settlement, contracts.
+- `feature/test-coverage-property` (merged) · randomized ledger/genetics invariants + pricing monotonicity · 123 tests.
+
+### Wave 3 (quality) complete.
+
+## Session summary
+16 feature branches built + merged to trunk (each its own pushed branch for review):
+daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
+health-observability, ci-github-actions, dockerize, openapi-docs,
+strain-search-favorites, leaderboards, market-auctions, weather-events,
+pod-automation, strain-stabilization, asa-wallet-settlement, contracts-orders,
+plus test-coverage-property. Tests: 79 -> 123, all green. No broken merges.
