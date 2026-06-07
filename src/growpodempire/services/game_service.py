@@ -29,6 +29,7 @@ from ..enums import (
 from ..genetics.breeding import cross, derive_strain_fields, assign_rarity
 from ..simulation import engine
 from ..simulation.clock import Clock, SystemClock
+from . import leveling_service
 from ..db.models import (
     Player,
     Wallet,
@@ -316,6 +317,7 @@ class GameService:
         stack = self._get_or_create_seed_stack(player_id, offspring.id, SeedSource.BRED)
         stack.quantity += 1
 
+        leveling_service.award(self.session, player_id, "breed", self.cfg)
         return offspring
 
     def _unique_slug(self, base: str) -> str:
@@ -388,6 +390,7 @@ class GameService:
             harvest.sale_value = value
             harvest.sold = True
 
+        leveling_service.award(self.session, player_id, "harvest", self.cfg)
         return harvest
 
     # ----- Marketplace ----------------------------------------------------

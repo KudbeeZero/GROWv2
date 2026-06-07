@@ -21,6 +21,7 @@ from ..db.models import Harvest, Strain
 from ..chain.provider import ChainProvider, ChainError
 from ..chain import metadata as md
 from ..chain.factory import shared_provider
+from . import leveling_service
 from .game_service import GameError
 
 
@@ -65,12 +66,14 @@ class MintingService:
 
         strain = self.session.get(Strain, harvest.strain_id)
         metadata = md.harvest_metadata(harvest, strain)
-        return self._mint(
+        minted = self._mint(
             harvest,
             asset_name=f"{strain.name} Harvest"[:32],
             url=self._nft_url("harvest", harvest.id),
             metadata=metadata,
         )
+        leveling_service.award(self.session, player_id, "mint", self.cfg)
+        return minted
 
     # ----- Strain NFTs ----------------------------------------------------
     def mint_strain(self, player_id: str, strain_id: str) -> Strain:
@@ -94,12 +97,14 @@ class MintingService:
             )
 
         metadata = md.strain_metadata(strain)
-        return self._mint(
+        minted = self._mint(
             strain,
             asset_name=strain.name[:32],
             url=self._nft_url("strain", strain.id),
             metadata=metadata,
         )
+        leveling_service.award(self.session, player_id, "mint", self.cfg)
+        return minted
 
     # ----- shared mint path ----------------------------------------------
     def _mint(self, row, asset_name: str, url: str, metadata: dict):

@@ -45,6 +45,9 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Algorand wallet address (Phase 3); nullable until the player links/creates one.
     algorand_address: Mapped[Optional[str]] = mapped_column(String(64), index=True)
     last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    # Progression: cumulative experience and derived level.
+    xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     wallet: Mapped["Wallet"] = relationship(
         back_populates="player", uselist=False, cascade="all, delete-orphan"

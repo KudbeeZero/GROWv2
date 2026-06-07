@@ -132,6 +132,15 @@ simulation:
     water_amount: 35
     feed_amount: 30
 
+# Player progression. XP is awarded for meaningful actions; level is derived
+# from cumulative XP via a quadratic curve (level L needs curve_base*L*(L-1)/2).
+leveling:
+  curve_base: 100
+  xp:
+    harvest: 25
+    breed: 40
+    mint: 60
+
 # On-chain assets (Phase 3, Algorand). The in-game GROW currency maps to an ASA;
 # rare/stabilized strains and premium harvests can be minted as ARC-3 NFTs.
 chain:
