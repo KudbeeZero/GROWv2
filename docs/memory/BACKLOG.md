@@ -66,6 +66,13 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🟡 ⬜ **KB enrichment pass (research-grounded)** — add a `terpene_cluster` per strain (myrcene /
   terpinolene / limonene-caryophyllene); model assayed THC as an inflation-biased distribution; wire
   the PPFD/DLI→yield relationship into the sim (Phase B). Per the research doc's §6 action items.
+- 🟡 ✅ **Seasonal Cannabis Cup** (2026-06-08) — `services/cup_service.py` + `CannabisCup`/`CupEntry`
+  models + migration `d5e6f7a8b9c0`: per-season competition, deterministic `cup_score`, lifetime
+  champion rewards (one-of-a-kind legendary trophy strain + permanent title + Hall of Fame). Public
+  `/cup/*` + authed enter; +9 tests. *Next (⬜): on-chain trophy NFT (Sprint 4), judged terpene-cluster
+  categories, grower-reputation tie-in.* Per `docs/memory/design/05-events-and-competition.md`.
+- 🟠 ⬜ **CI: enforce a single Alembic head** — add `alembic heads | wc -l == 1` (or `alembic upgrade
+  head`) as a guard; a fork at `fbb8fceedacd` was only caught by manual testing this session.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

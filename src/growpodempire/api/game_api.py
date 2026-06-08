@@ -17,6 +17,7 @@ from ..services.progression_service import ProgressionService
 from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
 from ..services.contract_service import ContractService
+from ..services.cup_service import CupService
 from ..services.research_service import ResearchService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
@@ -817,6 +818,53 @@ def fulfill_contract(player_id, contract_id):
             payload = ContractService(s).fulfill(player_id, contract_id)
         return jsonify(payload), 201
     except GameError as e:
+        return _error(str(e))
+
+
+# ----- Seasonal Cannabis Cup --------------------------------------------
+@game_bp.get("/cup/current")
+def cup_current():
+    """The current season's Cup (auto-judges any closed window). Public."""
+    with session_scope() as s:
+        cup = CupService(s).current_cup()
+        payload = {"cup": S.cup_dict(cup) if cup else None}
+        if cup is not None:
+            standings = CupService(s).standings(cup.id, limit=10)
+            payload["standings"] = [S.cup_entry_dict(e) for e in standings]
+    return jsonify(payload)
+
+
+@game_bp.get("/cup/<cup_id>/standings")
+def cup_standings(cup_id):
+    try:
+        with session_scope() as s:
+            entries = CupService(s).standings(cup_id, limit=100)
+            payload = [S.cup_entry_dict(e) for e in entries]
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
+@game_bp.get("/cup/hall-of-fame")
+def cup_hall_of_fame():
+    """Every season's champions — the lifetime record. Public."""
+    with session_scope() as s:
+        payload = CupService(s).hall_of_fame(limit=50)
+    return jsonify(payload)
+
+
+@game_bp.post("/players/<player_id>/cup/enter")
+@require_player
+@limiter.limit("30 per hour")
+def cup_enter(player_id):
+    data = request.get_json(force=True, silent=True) or {}
+    if not data.get("harvest_id"):
+        return _error("harvest_id is required")
+    try:
+        with session_scope() as s:
+            payload = CupService(s).enter(player_id, data["harvest_id"])
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
 
 

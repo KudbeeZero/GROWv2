@@ -80,6 +80,8 @@ class LedgerEntryType(str, Enum):
     RESEARCH_UNLOCK = "research_unlock"
     SHOP_PURCHASE = "shop_purchase"
     ADJUSTMENT = "adjustment"
+    CUP_ENTRY_FEE = "cup_entry_fee"        # sink: charged to enter a seasonal cup
+    CUP_PRIZE_PAYOUT = "cup_prize_payout"  # faucet: awarded to cup placers
 
 
 class ListingStatus(str, Enum):

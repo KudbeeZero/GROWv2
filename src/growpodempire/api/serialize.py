@@ -25,6 +25,7 @@ def player_dict(player, balance=None) -> dict:
         "algorand_address": player.algorand_address,
         "xp": getattr(player, "xp", 0),
         "level": getattr(player, "level", 1),
+        "cannabis_cup_title": getattr(player, "cannabis_cup_title", None),
         "created_at": _ts(player.created_at),
     }
     if balance is not None:
@@ -180,6 +181,37 @@ def contract_dict(contract) -> dict:
         "status": contract.status,
         "deadline_at": _ts(contract.deadline_at),
         "fulfilled_at": _ts(contract.fulfilled_at),
+    }
+
+
+def cup_dict(cup) -> dict:
+    return {
+        "id": cup.id,
+        "edition": cup.edition,
+        "season": cup.season,
+        "title": cup.title,
+        "status": cup.status,
+        "entry_fee": _money(cup.entry_fee),
+        "prize_pool": _money(cup.prize_pool),
+        "starts_at": _ts(cup.starts_at),
+        "ends_at": _ts(cup.ends_at),
+        "judged_at": _ts(cup.judged_at),
+        "winner_id": cup.winner_id,
+        "champion_strain_id": cup.champion_strain_id,
+    }
+
+
+def cup_entry_dict(entry) -> dict:
+    return {
+        "id": entry.id,
+        "cup_id": entry.cup_id,
+        "player_id": entry.player_id,
+        "strain_id": entry.strain_id,
+        "strain_name": entry.strain_name,
+        "score": entry.score,
+        "rank": entry.rank,
+        "prize_grow": _money(entry.prize_grow),
+        "submitted_at": _ts(entry.submitted_at),
     }
 
 

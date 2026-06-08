@@ -85,3 +85,45 @@ def harvest_value(
         * quality_factor(quality, cfg)
     )
     return to_money(value)
+
+
+def cup_score(
+    weight_g: float,
+    quality: float,
+    rarity: "Rarity | str",
+    cfg: EconomyConfig,
+    *,
+    thc_actual: float = 15.0,
+    cbd_actual: float = 0.0,
+    terpene_intensity: float = 0.0,
+) -> float:
+    """Deterministic, server-authoritative Cannabis Cup score (0..~100+).
+
+    A judge's scorecard, NOT a sale price: it rewards *quality* (cure/health),
+    *potency*, *terpene expression*, and a little *yield*, then applies a rarity
+    prestige multiplier. Pure function of the harvest's snapshotted attributes —
+    no randomness — so an entry's score is reproducible and verifiable.
+    """
+    rarity = Rarity(rarity).value if not isinstance(rarity, str) else rarity
+    cup = cfg.raw.get("cannabis_cup", {})
+    s = cup.get("scoring", {})
+
+    weight_norm = min(1.0, max(0.0, weight_g) / float(s.get("weight_norm_grams", 150.0)))
+    quality_norm = max(0.0, min(100.0, quality)) / 100.0
+    thc_norm = max(0.0, min(float(s.get("thc_norm_pct", 30.0)), thc_actual)) / float(
+        s.get("thc_norm_pct", 30.0)
+    )
+    cbd_norm = max(0.0, min(float(s.get("cbd_norm_pct", 20.0)), cbd_actual)) / float(
+        s.get("cbd_norm_pct", 20.0)
+    )
+    terp_norm = max(0.0, min(1.0, terpene_intensity))
+
+    base = 100.0 * (
+        quality_norm * float(s.get("quality_weight", 0.35))
+        + thc_norm * float(s.get("thc_weight", 0.20))
+        + terp_norm * float(s.get("terpene_weight", 0.25))
+        + weight_norm * float(s.get("weight_weight", 0.15))
+        + cbd_norm * float(s.get("cbd_weight", 0.05))
+    )
+    rarity_mult = float(s.get("rarity_multiplier", {}).get(rarity, 1.0))
+    return round(base * rarity_mult, 2)

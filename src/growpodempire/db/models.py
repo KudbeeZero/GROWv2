@@ -50,6 +50,9 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Progression: cumulative experience and derived level.
     xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    # Permanent prestige: the most recent Cannabis Cup title a player has won
+    # (a lifetime unlock; the full history lives in cannabis_cups.winner_id).
+    cannabis_cup_title: Mapped[Optional[str]] = mapped_column(String(96), default=None)
 
     wallet: Mapped["Wallet"] = relationship(
         back_populates="player", uselist=False, cascade="all, delete-orphan"
@@ -384,6 +387,56 @@ class Contract(UUIDPrimaryKeyMixin, Base):
     fulfilled_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
     __table_args__ = (Index("ix_contract_player_status", "player_id", "status"),)
+
+
+class CannabisCup(UUIDPrimaryKeyMixin, Base):
+    """A seasonal Cannabis Cup competition. One open cup per season `edition`
+    (e.g. "2026-summer"); players submit harvests, the best score wins, and the
+    champion earns lifetime prestige (a one-of-a-kind strain + a permanent title).
+    """
+
+    __tablename__ = "cannabis_cups"
+
+    edition: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
+    season: Mapped[str] = mapped_column(String(16), nullable=False)
+    title: Mapped[str] = mapped_column(String(96), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="open", nullable=False)
+    entry_fee: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
+    prize_pool: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
+    starts_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    ends_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    judged_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    winner_id: Mapped[Optional[str]] = mapped_column(ForeignKey("players.id"))
+    champion_strain_id: Mapped[Optional[str]] = mapped_column(ForeignKey("strains.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (Index("ix_cannabis_cups_status_ends_at", "status", "ends_at"),)
+
+
+class CupEntry(UUIDPrimaryKeyMixin, Base):
+    """One harvest submitted to a Cannabis Cup, with its server-computed score
+    snapshotted at submission (immutable). Ranked at judging."""
+
+    __tablename__ = "cup_entries"
+
+    cup_id: Mapped[str] = mapped_column(ForeignKey("cannabis_cups.id"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    harvest_id: Mapped[str] = mapped_column(ForeignKey("harvests.id"), nullable=False)
+    strain_id: Mapped[str] = mapped_column(ForeignKey("strains.id"), nullable=False)
+    strain_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
+    rank: Mapped[Optional[int]] = mapped_column(Integer)
+    prize_grow: Mapped[Decimal] = mapped_column(MONEY, default=0, nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        Index("ix_cup_entries_cup_score", "cup_id", "score"),
+        Index("uq_cup_entries_cup_harvest", "cup_id", "harvest_id", unique=True),
+    )
 
 
 class MarketListing(UUIDPrimaryKeyMixin, TimestampMixin, Base):

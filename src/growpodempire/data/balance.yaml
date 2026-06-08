@@ -309,6 +309,43 @@ shop:
 events:
   current_season: all   # all | spring | summer | fall | winter
 
+# Seasonal Cannabis Cup (LiveOps competition). One Cup runs per season
+# (`edition` = "<year>-<season>", keyed off events.current_season); players enter
+# unsold harvests for a fee, the best deterministic score wins, and the champion
+# earns LIFETIME prestige — a one-of-a-kind legendary trophy strain + a permanent
+# title. Entry fees are a sink; prizes are a (bounded) faucet. See
+# services/cup_service.py and docs/memory/design/05-events-and-competition.md.
+cannabis_cup:
+  enabled: true
+  duration_days: 90              # the competition window (a season)
+  entry_fee: 100                 # GROW to submit one harvest (a sink)
+  max_entries_per_player: 3
+  # Prize payouts (a faucet, gated by the entry-fee sink + real grow effort).
+  prizes:
+    first: 2500
+    second: 1200
+    third: 600
+    top_n: 10                    # ranks 4..top_n each get `top_each`
+    top_each: 200
+  champion_xp: 500               # one-time XP to the champion
+  placer_xp: 150                 # XP to 2nd/3rd (and any prized placer)
+  # Deterministic judge's scorecard (a harvest's snapshotted attributes only).
+  scoring:
+    quality_weight: 0.35
+    thc_weight: 0.20
+    terpene_weight: 0.25
+    weight_weight: 0.15
+    cbd_weight: 0.05
+    weight_norm_grams: 150       # grams that count as a "full" weight score
+    thc_norm_pct: 30             # THC% that counts as a "full" potency score
+    cbd_norm_pct: 20
+    rarity_multiplier:           # prestige multiplier on the final score
+      common: 1.0
+      uncommon: 1.25
+      rare: 1.6
+      epic: 2.2
+      legendary: 3.0
+
 # Agentic AI auto-care (Phase 3b). The Master Grower can call care tools itself,
 # bounded per invocation by a GROW budget and a max number of actions. The spend
 # guard is the safety mechanism — every tool call still goes through the normal

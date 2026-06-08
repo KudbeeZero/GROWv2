@@ -108,6 +108,22 @@ catalog↔KB sync (every strain has an entry, no orphans); the KB ships from sou
 files (no `package_data`). The encyclopedia figures are reference ranges, not per-plant sim outputs;
 a `/deep-research` campaign will verify/deepen them.
 
+### 2026-06-08 — Seasonal Cannabis Cup with lifetime champion rewards
+**Decision:** Add a seasonal competition (`services/cup_service.py`, `db/models.py:CannabisCup`/
+`CupEntry`): one Cup per season (`edition = "<year>-<season>"`, keyed off `events.current_season`),
+players enter unsold harvests for a fee, entries are ranked by a deterministic server-side
+`cup_score` (`economy/pricing.py`), and the champion earns **lifetime** prestige — a one-of-a-kind
+LEGENDARY trophy strain (minted from the winning genetics, with the winning strain as its parent),
+a permanent `Player.cannabis_cup_title`, and a permanent Hall-of-Fame record. Lifecycle is lazy
+(opens on access, auto-judges when the season window closes), idempotent, ledger-guarded.
+**Why:** the grow/genetics depth needed a recurring, social endgame that turns quality into prestige
+("rare realities that are lifetime"); seasons make it a renewing LiveOps loop and advance the
+discovery-economy/mastery moat (#5/#6). **Consequences:** two new `LedgerEntryType`s (`CUP_ENTRY_FEE`
+sink, `CUP_PRIZE_PAYOUT` faucet); a forward-only Alembic migration (`d5e6f7a8b9c0`) — **note:** the
+true migration head was `c7e2f4a16b80` (a fork existed at `fbb8fceedacd`), caught by testing
+`alembic upgrade head` (single-head check belongs in CI). On-chain trophy NFT + judged
+terpene-cluster categories are ⬜ (Sprint 4 / `05-events-and-competition.md`).
+
 ### 2026-06-08 — Strain names are lore, not genetic ground truth (research-backed)
 **Decision:** Per a 5-agent deep-research campaign (`docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md`),
 treat strain **names** and the `indica_ratio`/genotype label as *loose phenotype/morphology lore*, not
