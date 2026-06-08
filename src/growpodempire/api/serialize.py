@@ -26,6 +26,7 @@ def player_dict(player, balance=None) -> dict:
         "xp": getattr(player, "xp", 0),
         "level": getattr(player, "level", 1),
         "cannabis_cup_title": getattr(player, "cannabis_cup_title", None),
+        "university_title": getattr(player, "university_title", None),
         "created_at": _ts(player.created_at),
     }
     if balance is not None:
@@ -181,6 +182,17 @@ def contract_dict(contract) -> dict:
         "status": contract.status,
         "deadline_at": _ts(contract.deadline_at),
         "fulfilled_at": _ts(contract.fulfilled_at),
+    }
+
+
+def enrollment_dict(e) -> dict:
+    return {
+        "id": e.id,
+        "player_id": e.player_id,
+        "course_key": e.course_key,
+        "status": e.status,
+        "started_at": _ts(e.started_at),
+        "completed_at": _ts(e.completed_at),
     }
 
 

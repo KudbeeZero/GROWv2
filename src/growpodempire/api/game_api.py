@@ -18,6 +18,7 @@ from ..services.leaderboard_service import LeaderboardService
 from ..services.weather_service import WeatherService
 from ..services.contract_service import ContractService
 from ..services.cup_service import CupService
+from ..services.university_service import UniversityService
 from ..services.research_service import ResearchService
 from ..services import leveling_service
 from ..economy.ledger import InsufficientFundsError
@@ -866,6 +867,84 @@ def cup_enter(player_id):
         return jsonify(payload), 201
     except (GameError, InsufficientFundsError) as e:
         return _error(str(e))
+
+
+# ----- GrowPod University -------------------------------------------------
+@game_bp.get("/university/catalog")
+def university_catalog():
+    """Public course/degree catalog."""
+    with session_scope() as s:
+        payload = UniversityService(s).catalog()
+    return jsonify(payload)
+
+
+@game_bp.get("/players/<player_id>/university")
+@require_player
+def university_transcript(player_id):
+    """A player's transcript: courses (status/progress), degrees, and title."""
+    try:
+        with session_scope() as s:
+            payload = UniversityService(s).transcript(player_id)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
+@game_bp.post("/players/<player_id>/courses/<course_key>/enroll")
+@require_player
+@limiter.limit("60 per hour")
+def university_enroll(player_id, course_key):
+    try:
+        with session_scope() as s:
+            enrollment = UniversityService(s).enroll(player_id, course_key)
+            payload = S.enrollment_dict(enrollment)
+        return jsonify(payload), 201
+    except (GameError, InsufficientFundsError) as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/courses/<course_key>/complete")
+@require_player
+def university_complete(player_id, course_key):
+    try:
+        with session_scope() as s:
+            payload = UniversityService(s).complete_course(player_id, course_key)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.post("/players/<player_id>/degrees/<degree_key>/claim")
+@require_player
+def university_claim_degree(player_id, degree_key):
+    try:
+        with session_scope() as s:
+            payload = UniversityService(s).claim_degree(player_id, degree_key)
+        return jsonify(payload), 201
+    except GameError as e:
+        return _error(str(e))
+
+
+@game_bp.get("/players/<player_id>/courses/<course_key>/lecture")
+@require_player
+@limiter.limit("30 per minute")
+def university_lecture(player_id, course_key):
+    """The Professor's lecture for a course (AI; deterministic mock in CI)."""
+    from ..services.lecturer_service import LecturerService
+    from ..ai.provider import AdvisorError
+
+    level = request.args.get("level", "beginner")
+    plant_id = request.args.get("plant_id")
+    try:
+        with session_scope() as s:
+            lecturer = LecturerService(s)
+            report = lecturer.teach(player_id, course_key, level=level, plant_id=plant_id)
+            payload = {"provider": lecturer.provider.name(), **report.model_dump()}
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+    except AdvisorError as e:
+        return _error(f"Professor unavailable: {e}", 503)
 
 
 # ----- On-chain: wallet linking, NFT minting, metadata -------------------

@@ -56,6 +56,7 @@ repo-relative (under `src/growpodempire/` unless noted); every ✅ here is check
 | `design/03-grower-skills.md` | `services/leveling_service.py` · `services/research_service.py` · `services/progression_service.py` · `data/balance.yaml` (`research`/`leveling`) | 🔨 no skill trees yet |
 | `design/04-honesty-and-trust.md` | `simulation/engine.py` (`_rng_for`) · `services/game_service.py` (`verify_strain`) · `api/game_api.py` (`/provenance`) · `economy/ledger.py` · `services/advisor_service.py` | 🔨 fairness shipped for breeding |
 | `design/05-events-and-competition.md` | `services/cup_service.py` · `economy/pricing.py` (`cup_score`) · `data/balance.yaml` (`cannabis_cup`) · `db/models.py` (`CannabisCup`/`CupEntry`) · `api/game_api.py` (`/cup/*`) | ✅ seasonal Cup + lifetime rewards |
+| `design/06-university.md` | `services/university_service.py` · `services/lecturer_service.py` · `data/curriculum.yaml` · `ai/lecturer_mock.py`/`lecturer_claude.py` · `db/models.py` (`CourseEnrollment`/`DegreeProgress`) · `api/game_api.py` (`/university/*`) | ✅ degrees + AI Professor |
 
 **What the sim engine actually reads today** (`simulation/engine.py`): water, nutrient (single
 scalar), temperature, humidity, pH, **light (PPFD)**, **derived leaf VPD**, pest & disease levels;
@@ -76,6 +77,10 @@ The seven differentiators from `design/00-game-vision.md`, mapped to where they'
 | 6 | Mastery + time as the gate / anti-whale | 🔨 | `services/leveling_service.py`, `services/research_service.py` |
 | 7 | AI Master Grower data flywheel | 🔨 | `services/advisor_service.py`, `services/autocare_service.py` |
 
+Mastery (#6) now has two earned axes shipped: the spend-based research tree **and** **GrowPod
+University** (`services/university_service.py`) — time + practical study → degrees that grant
+permanent perks + a title, taught by an AI Professor (`services/lecturer_service.py`).
+
 The five player-facing pillars: **The Grow** 🔨 · **The Genetics** 🔨 · **The Mastery** 🔨 ·
 **The Economy** ✅ (`economy/ledger.py`, `economy/pricing.py`) · **The Chain** 🔨 (provider ABC + mock
 real; TestNet/IPFS deferred — Sprint 4).
@@ -85,6 +90,9 @@ real; TestNet/IPFS deferred — Sprint 4).
   public). Trust surface: public `GET /strains/<id>/provenance` replays a cross to prove its genome,
   and `GET /strains/<id>/lineage` replays the whole ancestry back to base-catalog roots. Competition
   surface: `GET /cup/current`, `/cup/<id>/standings`, `/cup/hall-of-fame`, `POST .../cup/enter`.
+  University surface: `GET /university/catalog`, `GET /players/<id>/university`, `POST
+  .../courses/<key>/{enroll,complete}`, `POST /players/<id>/degrees/<key>/claim`, `GET
+  .../courses/<key>/lecture`.
 - **Strain knowledge base:** `data/strain_knowledge.yaml` — a scientist-grade encyclopedia (lineage,
   origin, cannabinoid/terpene detail, cultivation parameters) for all 22 catalog strains, surfaced at
   public `GET /strains/<id>/knowledge`. A test enforces 1:1 sync between the catalog and the KB. It's

@@ -124,6 +124,20 @@ true migration head was `c7e2f4a16b80` (a fork existed at `fbb8fceedacd`), caugh
 `alembic upgrade head` (single-head check belongs in CI). On-chain trophy NFT + judged
 terpene-cluster categories are ⬜ (Sprint 4 / `05-events-and-competition.md`).
 
+### 2026-06-08 — GrowPod University: earned degrees with time + practical gating
+**Decision:** Add a learning subsystem (`services/university_service.py`, `data/curriculum.yaml`,
+`db/models.py:CourseEnrollment`/`DegreeProgress`): enroll (pay **tuition**, a sink) → study real time
+→ complete by meeting a **practical tied to live gameplay** → earn **degrees** that grant permanent
+perks + a `Player.university_title` + XP. An AI **Professor** (`LecturerProvider` mirroring the
+advisor stack: deterministic mock for CI, Claude in prod) delivers lectures. Curriculum grounded in
+real programs (`docs/research/2026-06-08-cannabis-education-curriculum.md`). **Why:** the moat's
+earned-mastery axis (#6) needed a *do-to-learn* counterpart to the GROW-spend research tree, and the
+game's depth deserved a teachable home; time + practical gating rewards serious players. **Consequences:**
+degree perks reuse the research `_EFFECT_KEYS` and are summed into the `_research()` effect helpers
+(no parallel apply path); new `LedgerEntryType.TUITION` (sink, no GROW faucet → net-deflationary);
+forward-only migration `e7a9c1b3f2d8` (single head verified). Quizzes, more departments, a Doctorate
+tier, and diploma NFTs are ⬜ (`06-university.md`).
+
 ### 2026-06-08 — Strain names are lore, not genetic ground truth (research-backed)
 **Decision:** Per a 5-agent deep-research campaign (`docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md`),
 treat strain **names** and the `indica_ratio`/genotype label as *loose phenotype/morphology lore*, not

@@ -53,6 +53,8 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Permanent prestige: the most recent Cannabis Cup title a player has won
     # (a lifetime unlock; the full history lives in cannabis_cups.winner_id).
     cannabis_cup_title: Mapped[Optional[str]] = mapped_column(String(96), default=None)
+    # Highest GrowPod University degree title earned (permanent).
+    university_title: Mapped[Optional[str]] = mapped_column(String(96), default=None)
 
     wallet: Mapped["Wallet"] = relationship(
         back_populates="player", uselist=False, cascade="all, delete-orphan"
@@ -436,6 +438,39 @@ class CupEntry(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (
         Index("ix_cup_entries_cup_score", "cup_id", "score"),
         Index("uq_cup_entries_cup_harvest", "cup_id", "harvest_id", unique=True),
+    )
+
+
+class CourseEnrollment(UUIDPrimaryKeyMixin, Base):
+    """A player enrolled in a GrowPod University course. `status` goes
+    enrolled -> completed once the study time elapses and the practical is met."""
+
+    __tablename__ = "course_enrollments"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    course_key: Mapped[str] = mapped_column(String(48), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="enrolled", nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
+    __table_args__ = (
+        Index("uq_course_enrollments_player_course", "player_id", "course_key", unique=True),
+    )
+
+
+class DegreeProgress(UUIDPrimaryKeyMixin, Base):
+    """A degree a player has earned — a permanent unlock granting perks + a title."""
+
+    __tablename__ = "degree_progress"
+
+    player_id: Mapped[str] = mapped_column(ForeignKey("players.id"), nullable=False)
+    degree_key: Mapped[str] = mapped_column(String(48), nullable=False)
+    earned_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        Index("uq_degree_progress_player_degree", "player_id", "degree_key", unique=True),
     )
 
 

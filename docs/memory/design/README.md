@@ -43,6 +43,7 @@ shipped feature (especially anything on-chain — the chain layer is mocked; see
 | 3 | `03-grower-skills.md` | Mastery + time as the design axis: grower skill trees, the knowledge economy, the equipment bridge. |
 | 4 | `04-honesty-and-trust.md` | The trust layer: provable fairness, a transparent economy, an honest AI advisor, co-evolution with the model line. |
 | 5 | `05-events-and-competition.md` | The seasonal Cannabis Cup: deterministic judging + lifetime champion rewards (trophy strain, permanent title, Hall of Fame). |
+| 6 | `06-university.md` | GrowPod University: classes, time + practical study, degrees (permanent perks + title), and the AI Professor's lectures. |
 | — | `assets/` | Visual-influence references (e.g. the genetic-constellation aesthetic). |
 
 ## Maintenance

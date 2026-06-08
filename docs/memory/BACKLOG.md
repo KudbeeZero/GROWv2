@@ -73,6 +73,12 @@ once they appear here. Last reconciled: **2026-06-08**.
   categories, grower-reputation tie-in.* Per `docs/memory/design/05-events-and-competition.md`.
 - 🟠 ⬜ **CI: enforce a single Alembic head** — add `alembic heads | wc -l == 1` (or `alembic upgrade
   head`) as a guard; a fork at `fbb8fceedacd` was only caught by manual testing this session.
+- 🟡 ✅ **GrowPod University** (2026-06-08) — `services/university_service.py` + `lecturer_service.py`
+  + `data/curriculum.yaml` + `CourseEnrollment`/`DegreeProgress` + migration `e7a9c1b3f2d8`: enroll
+  (tuition sink) → time + practical study → degrees (permanent perks via the research effect keys +
+  a title + XP), taught by an AI Professor (mock for CI, Claude in prod). Public `/university/catalog`
+  + authed enroll/complete/claim/lecture; +13 tests. Grounded in a cited curriculum research report.
+  *Next (⬜): quizzes, more departments, Doctorate tier, diploma NFTs.* Per `docs/memory/design/06-university.md`.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

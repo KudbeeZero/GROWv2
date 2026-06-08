@@ -68,3 +68,33 @@ class AdvisorProvider(ABC):
         height, health, water/nutrient/pest/disease levels, condition_flags,
         a genome summary, the pod environment, and recent events.
         """
+
+
+class LectureReport(BaseModel):
+    """A GrowPod University lecture delivered by the Professor (Master Grower)."""
+
+    title: str = Field(description="Lecture title.")
+    summary: str = Field(description="One-paragraph overview for the course outline.")
+    content: str = Field(description="The full lecture prose (several paragraphs).")
+    key_takeaways: List[str] = Field(
+        default_factory=list, description="3-5 actionable takeaways."
+    )
+    quiz_question: str = Field(
+        default="", description="A single comprehension-check question (may be empty)."
+    )
+
+
+class LecturerProvider(ABC):
+    """Generates educational lecture content for a course topic."""
+
+    @abstractmethod
+    def name(self) -> str:
+        """Backend identifier (e.g. 'mock', 'claude:...')."""
+
+    @abstractmethod
+    def lecture(self, context: dict) -> LectureReport:
+        """Produce a LectureReport from a course/topic context dict.
+
+        `context` (built by LecturerService) carries the course name, lecture
+        topic + objectives, requested level, and optional live game-state.
+        """

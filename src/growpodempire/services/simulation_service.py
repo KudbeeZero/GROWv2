@@ -46,7 +46,11 @@ class SimulationService:
 
     def _research(self, player_id: str) -> dict:
         from .research_service import research_effects
-        return research_effects(self.session, player_id, self.cfg)
+        from .university_service import degree_effects
+        fx = research_effects(self.session, player_id, self.cfg)
+        for k, v in degree_effects(self.session, player_id, self.cfg).items():
+            fx[k] = fx.get(k, 0.0) + v
+        return fx
 
     def _care_cost(self, player_id: str, base) -> Decimal:
         """A care cost after applying any care-discount research."""

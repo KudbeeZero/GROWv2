@@ -186,6 +186,15 @@ simulation:
       light_intensity: [0, 1000]
       ph_level: [4.0, 9.0]
 
+# GrowPod University (LiveOps education). Curriculum structure (departments,
+# courses, degrees, lectures, practicals, perks) lives in data/curriculum.yaml;
+# this block holds the economic knobs. Enrolling pays tuition (a sink); degrees
+# pay perks/XP, not GROW, so the system is net-deflationary. See
+# services/university_service.py and docs/memory/design/06-university.md.
+university:
+  enabled: true
+  course_xp: 50          # XP awarded on completing any course
+
 # Retention loop: a once-per-24h login stipend and one-time achievement rewards.
 progression:
   daily_cooldown_hours: 22       # claim window (slightly under 24h is forgiving)
