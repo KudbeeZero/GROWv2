@@ -29,7 +29,7 @@ from ..enums import (
     ListingItemType,
 )
 from ..genetics.breeding import cross, derive_strain_fields, assign_rarity
-from ..genetics.traits import express_terpenes
+from ..genetics.traits import express_terpenes, normalize_genome
 from ..simulation import engine, curing
 from ..simulation.clock import Clock, SystemClock
 from . import leveling_service
@@ -588,6 +588,63 @@ class GameService:
         new_stack.quantity += 1
         leveling_service.award(self.session, player_id, "breed", self.cfg)
         return offspring
+
+    # ----- Provable fairness ----------------------------------------------
+    def verify_strain(self, strain_id: str) -> dict:
+        """Re-derive a bred strain's genome from its persisted breeding seed and
+        confirm it matches what was recorded — the trust layer's "verify this
+        result" affordance (see docs/memory/design/04-honesty-and-trust.md).
+
+        The breeding RNG is seeded and the seed + parents are public, so anyone
+        can replay `cross()` and prove the genome was neither cherry-picked nor
+        tampered with. Read-only; works for both breeds and stabilizations
+        (selfing is a cross of a strain with itself).
+        """
+        strain = self.get_strain(strain_id)
+        event = (
+            self.session.query(BreedingEvent)
+            .filter(BreedingEvent.offspring_strain_id == strain_id)
+            .order_by(BreedingEvent.created_at.desc())
+            .first()
+        )
+        if event is None:
+            return {
+                "strain_id": strain_id,
+                "verifiable": False,
+                "reason": "No breeding event — a base-catalog or otherwise non-bred strain.",
+            }
+
+        parent_a = self.session.get(Strain, event.parent_a_id)
+        parent_b = self.session.get(Strain, event.parent_b_id)
+        rng = random.Random(event.rng_seed)
+        result = cross(
+            parent_a.genome, parent_b.genome, rng,
+            stability_a=parent_a.stability, stability_b=parent_b.stability,
+            generation_a=parent_a.generation, generation_b=parent_b.generation,
+        )
+
+        stored = normalize_genome(strain.genome)
+        max_delta = 0.0
+        mismatched: List[str] = []
+        for trait, gene in result.genome.items():
+            s = stored.get(trait, {})
+            delta = abs(float(gene["value"]) - float(s.get("value", gene["value"])))
+            max_delta = max(max_delta, delta)
+            if delta > 1e-9 or s.get("dominance") != gene["dominance"]:
+                mismatched.append(trait)
+
+        return {
+            "strain_id": strain_id,
+            "verifiable": True,
+            "verified": not mismatched,
+            "rng_seed": event.rng_seed,
+            "parent_a_id": event.parent_a_id,
+            "parent_b_id": event.parent_b_id,
+            "bred_at": event.created_at.isoformat() if event.created_at else None,
+            "max_value_delta": round(max_delta, 12),
+            "mismatched_traits": mismatched,
+            "method": "replay cross() with the persisted rng_seed, then compare the genome",
+        }
 
     # ----- Harvest & sale -------------------------------------------------
     def harvest_plant(

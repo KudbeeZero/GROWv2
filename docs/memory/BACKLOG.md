@@ -43,7 +43,8 @@ once they appear here. Last reconciled: **2026-06-08**.
   chain). Per `docs/memory/design/02-genetics.md`.
 - 🟡 ⬜ **Grower-skill mastery** — use-based skill trees (effort/time → capability), distinct from the
   spend-based research tree; the equipment bridge. Per `docs/memory/design/03-grower-skills.md`.
-- 🟡 ⬜ **Trust layer** — player-facing provable fairness (replay/verify a seeded result), a public
+- 🟡 🔨 **Trust layer** — provable fairness landed for breeding (`GET /strains/<id>/provenance`
+  replays the cross; +3 tests). Remaining: generalize replay to sim/weather/discovery, a public
   faucet-vs-sink economy view, advisor confidence/uncertainty surfacing, and a no-dark-patterns
   charter. Mostly *exposing* primitives we already have. Per `docs/memory/design/04-honesty-and-trust.md`.
 

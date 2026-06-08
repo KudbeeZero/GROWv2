@@ -193,6 +193,18 @@ def get_strain(strain_id):
         return _error(str(e), 404)
 
 
+@game_bp.get("/strains/<strain_id>/provenance")
+def strain_provenance(strain_id):
+    """Provably-fair check: re-derive a bred strain's genome from its public
+    breeding seed and confirm it matches. Public/read-only — anyone can verify."""
+    try:
+        with session_scope() as s:
+            payload = GameService(s).verify_strain(strain_id)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
 # ----- Seeds & planting --------------------------------------------------
 @game_bp.get("/players/<player_id>/seeds")
 @require_player

@@ -29,10 +29,13 @@ We have determinism, an audit ledger, and persisted seeds **right now**. The tru
 about *exposing and proving* what's already true.
 
 ## The five trust pledges
-1. **Provably-fair RNG.** ⬜ Every random draw — genetics segregation, mutation, weather, drops,
+1. **Provably-fair RNG.** 🔨 Every random draw — genetics segregation, mutation, weather, drops,
    discovery — is seeded and the seed is disclosed, so a player (or a third party) can **replay and
-   verify** the outcome. No rigged drops, no secret weighting. (The seed is already persisted for
-   breeding; generalize it and surface a "verify this result" affordance.)
+   verify** the outcome. No rigged drops, no secret weighting. **Shipped for breeding:**
+   `GET /strains/<id>/provenance` re-derives a bred strain's genome from its persisted `rng_seed` and
+   confirms it matches (`services/game_service.py:verify_strain`) — anyone can replay the cross. The
+   API even refuses a client-supplied seed at breed time (anti seed-shopping). *Next:* generalize the
+   same replay to sim / weather / discovery draws.
 2. **A transparent economy.** 🔨→⬜ Publish faucets vs sinks and the live inflation picture from the
    ledger. No hidden money printing; the burn is visible. The data exists in `economy/ledger.py`;
    the public-facing transparency view is the work.
@@ -74,10 +77,12 @@ progression is a transparent, dated record (a living "advisor charter"), not a s
 
 ## What's real today vs planned — stay honest about the honesty layer
 - ✅ Deterministic seeded sim; persisted breeding seed; auditable ledger; structured advisor outputs.
-- 🔨 Advisor confidence/uncertainty surfacing; public economy transparency view.
-- ⬜ Player-facing "verify this result" (provably-fair) affordances; the no-dark-patterns charter;
-  on-chain provenance (gated on Sprint 4 — the chain is mocked, see `DECISIONS.md`); the advisor
-  model/capability changelog.
+- ✅ **Provably-fair breeding verification** — `GET /strains/<id>/provenance` replays the cross and
+  proves the genome matches (`verify_strain`, `tests/test_provenance.py`).
+- 🔨 Advisor confidence/uncertainty surfacing; public economy transparency view; generalizing
+  "verify this result" beyond breeding (sim/weather/discovery).
+- ⬜ The no-dark-patterns charter; on-chain provenance (gated on Sprint 4 — the chain is mocked, see
+  `DECISIONS.md`); the advisor model/capability changelog.
 
 > A trust layer that overstates itself defeats its own purpose. Every claim here is tagged; nothing
 > ships to players as "provably fair" until a player can actually do the proving.
