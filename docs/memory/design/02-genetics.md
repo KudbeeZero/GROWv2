@@ -61,12 +61,16 @@ in `00-game-vision.md`.)
 
 ---
 
-## Provenance as moat ⬜
+## Provenance as moat 🔨→⬜
 The endgame isn't a strain — it's a **verifiable genetic ledger.**
-- **Genome fingerprint.** Hash the canonical genome → a stable, unique id for a cultivar.
-- **On-chain pedigree graph.** Mint stabilized cultivars with their parent edges; the chain mirrors
-  the DB's lineage (`parent_a_id/parent_b_id`). DB stays authoritative (ARCHITECTURE) — the chain
-  *proves*, it doesn't *govern*.
+- **Verifiable pedigree (✅ shipped).** `GET /strains/<id>/lineage`
+  (`services/game_service.py:verify_lineage`) walks a strain's whole ancestry back to base-catalog
+  roots, replaying every bred node from its persisted seed — the provable family tree *data* behind
+  the GenBank, no chain required. `tests/test_provenance.py` covers it.
+- **Genome fingerprint (⬜).** Hash the canonical genome → a stable, unique id for a cultivar.
+- **On-chain pedigree graph (⬜).** Mint stabilized cultivars with their parent edges; the chain
+  mirrors the DB's lineage (`parent_a_id/parent_b_id`). DB stays authoritative (ARCHITECTURE) — the
+  chain *proves*, it doesn't *govern*.
 - **The GenBank.** The union of all minted cultivars + pedigree edges = a shared, player-owned seed
   bank with network effects. It compounds; it can't be cloned by a fresh competitor.
 - **Proof-of-Cultivation.** Bundle `{breeding seed, parent fingerprints, agronomic conditions}` into

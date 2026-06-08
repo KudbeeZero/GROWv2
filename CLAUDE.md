@@ -32,7 +32,7 @@ core loop**: grow → care → harvest → cure → sell/breed/stabilize → min
 ## Run it
 ```bash
 make setup                   # one-time: venv + deps + editable install
-make test                    # full suite (currently 139 tests, all green)
+make test                    # full suite + coverage gate (ratchet floor in pyproject.toml)
 make lint                    # the lint gate CI uses
 make serve                   # local API   (web: cd web && npm i && npm run dev)
 ```

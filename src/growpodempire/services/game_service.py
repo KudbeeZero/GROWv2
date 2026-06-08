@@ -646,6 +646,62 @@ class GameService:
             "method": "replay cross() with the persisted rng_seed, then compare the genome",
         }
 
+    def verify_lineage(self, strain_id: str, max_nodes: int = 256) -> dict:
+        """Recursively verify a strain's entire breeding ancestry — the
+        verifiable pedigree behind the GenBank (see
+        docs/memory/design/02-genetics.md). Walks parent links back to
+        base-catalog roots, replaying every bred node's cross from its seed, so
+        a whole family tree is provable, not just one strain. Read-only.
+        """
+        self.get_strain(strain_id)  # 404 if the strain doesn't exist
+        lineage: List[dict] = []
+        seen: set = set()
+        stack: List[str] = [strain_id]
+        fully_verified = True
+        root_count = 0
+
+        while stack and len(lineage) < max_nodes:
+            sid = stack.pop()
+            if sid in seen:
+                continue
+            seen.add(sid)
+            strain = self.session.get(Strain, sid)
+            if strain is None:
+                continue
+
+            proof = self.verify_strain(sid)
+            node = {
+                "strain_id": sid,
+                "name": strain.name,
+                "generation": strain.generation,
+                "rarity": strain.rarity,
+            }
+            if proof["verifiable"]:
+                node.update(
+                    verified=proof["verified"],
+                    rng_seed=proof["rng_seed"],
+                    parent_a_id=proof["parent_a_id"],
+                    parent_b_id=proof["parent_b_id"],
+                )
+                if not proof["verified"]:
+                    fully_verified = False
+                for pid in (proof["parent_a_id"], proof["parent_b_id"]):
+                    if pid and pid not in seen:
+                        stack.append(pid)
+            else:
+                node.update(root=True, is_base_catalog=strain.is_base_catalog)
+                root_count += 1
+            lineage.append(node)
+
+        return {
+            "strain_id": strain_id,
+            "fully_verified": fully_verified,
+            "node_count": len(lineage),
+            "root_count": root_count,
+            "truncated": bool(stack),
+            "lineage": lineage,
+        }
+
     # ----- Harvest & sale -------------------------------------------------
     def harvest_plant(
         self,

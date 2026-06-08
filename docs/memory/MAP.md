@@ -70,7 +70,7 @@ The seven differentiators from `design/00-game-vision.md`, mapped to where they'
 | 1 | Real plant-physiology engine, not a timer | 🔨 Phase A | `simulation/engine.py`, `simulation/horticulture.py` |
 | 2 | Generative, provably-unique genetics | 🔨 14-trait | `genetics/breeding.py` |
 | 3 | Proof-of-Cultivation (seed ✅ + verify ✅; on-chain ⬜) | 🔨 | `services/game_service.py`, `db/models.py` |
-| 4 | The GenBank (shared on-chain pedigree) | ⬜ | pedigree fields in `db/models.py`; chain mocked |
+| 4 | The GenBank (verifiable shared pedigree) | 🔨 | `services/game_service.py` (`verify_lineage`) + `GET /strains/<id>/lineage`; on-chain settlement ⬜ |
 | 5 | Discovery economy (first-finder credit) | ⬜ | — |
 | 6 | Mastery + time as the gate / anti-whale | 🔨 | `services/leveling_service.py`, `services/research_service.py` |
 | 7 | AI Master Grower data flywheel | 🔨 | `services/advisor_service.py`, `services/autocare_service.py` |
@@ -80,8 +80,9 @@ The five player-facing pillars: **The Grow** 🔨 · **The Genetics** 🔨 · **
 real; TestNet/IPFS deferred — Sprint 4).
 
 ## Surface area (anchors, not exhaustive)
-- **API:** ~46 routes under `/api/game` in `api/game_api.py` (writes auth'd + rate-limited; reads
-  public). Trust surface: public `GET /strains/<id>/provenance` replays a cross to prove its genome.
+- **API:** ~47 routes under `/api/game` in `api/game_api.py` (writes auth'd + rate-limited; reads
+  public). Trust surface: public `GET /strains/<id>/provenance` replays a cross to prove its genome,
+  and `GET /strains/<id>/lineage` replays the whole ancestry back to base-catalog roots.
 - **Not yet in the Codex** (covered only by ARCHITECTURE/standups, intentionally — gameplay, not
   moat): `services/contract_service.py`, `services/leaderboard_service.py`,
   `services/weather_service.py`, `services/minting_service.py`, `services/settlement_service.py`,

@@ -46,9 +46,11 @@ about *exposing and proving* what's already true.
 4. **No dark patterns — a published charter.** ⬜ Explicit, enforced commitments: disclosed odds, no
    loot-box manipulation, no manufactured FOMO, no pay-to-win obfuscation. Written down, versioned,
    and testable.
-5. **Verifiable provenance.** ⬜ Proof-of-Cultivation + the on-chain GenBank (`02-genetics.md`) let
-   anyone verify an asset's full history — authorship, lineage, and the conditions it was grown
-   under. Honesty about *where a thing came from*.
+5. **Verifiable provenance.** 🔨 Proof-of-Cultivation + the GenBank (`02-genetics.md`) let anyone
+   verify an asset's full history — authorship, lineage, and the conditions it was grown under.
+   **Shipped:** `GET /strains/<id>/lineage` replays a strain's entire ancestry from persisted seeds.
+   *Remaining (⬜):* genome fingerprint + on-chain settlement (chain is mocked). Honesty about *where
+   a thing came from*.
 
 ## "Building right beside you" — co-evolution with the model line
 The in-game AI's honesty and capability are **versioned against the Claude model line and logged in
@@ -79,6 +81,8 @@ progression is a transparent, dated record (a living "advisor charter"), not a s
 - ✅ Deterministic seeded sim; persisted breeding seed; auditable ledger; structured advisor outputs.
 - ✅ **Provably-fair breeding verification** — `GET /strains/<id>/provenance` replays the cross and
   proves the genome matches (`verify_strain`, `tests/test_provenance.py`).
+- ✅ **Verifiable pedigree** — `GET /strains/<id>/lineage` replays a strain's *whole ancestry* back
+  to base-catalog roots (`verify_lineage`) — the provable family tree behind the GenBank.
 - 🔨 Advisor confidence/uncertainty surfacing; public economy transparency view; generalizing
   "verify this result" beyond breeding (sim/weather/discovery).
 - ⬜ The no-dark-patterns charter; on-chain provenance (gated on Sprint 4 — the chain is mocked, see

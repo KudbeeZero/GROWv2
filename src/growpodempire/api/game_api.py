@@ -205,6 +205,18 @@ def strain_provenance(strain_id):
         return _error(str(e), 404)
 
 
+@game_bp.get("/strains/<strain_id>/lineage")
+def strain_lineage(strain_id):
+    """Verifiable pedigree: replay every bred ancestor back to base-catalog
+    roots. The provable family tree behind the GenBank. Public/read-only."""
+    try:
+        with session_scope() as s:
+            payload = GameService(s).verify_lineage(strain_id)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
 # ----- Seeds & planting --------------------------------------------------
 @game_bp.get("/players/<player_id>/seeds")
 @require_player

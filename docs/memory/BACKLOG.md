@@ -24,7 +24,9 @@ once they appear here. Last reconciled: **2026-06-08**.
   with this session's code. *(Partly delivers the "docs-drift check" from the 2026-06-08 standup §4A.)*
 
 ## 🟠 Medium (next 1–2 weeks — quality & the next real capability)
-- 🟠 ⬜ **CI coverage gate** — measure + floor coverage so the 139-test suite can't silently rot.
+- 🟠 ✅ **CI coverage gate** (2026-06-08) — `pytest --cov` with a ratchet floor (`pyproject.toml`
+  `fail_under=78`, ops scripts omitted), wired into `make test` + CI. Completes the "make truth
+  automatic" trio (lint + memory-integrity + coverage). *Ratchet the floor up as coverage climbs.*
 - 🟠 ⬜ **Sprint 4: real TestNet + IPFS** — fund treasury, run `reset_asa`, wire `ASA_ID`; move NFT
   metadata to IPFS; add a DB↔chain reconciliation job + `onchain_txid` audit.
 - 🟠 ⬜ **Sim cost cap** — bound compute-on-read catch-up; batch/materialize dormant plants.
@@ -49,10 +51,10 @@ once they appear here. Last reconciled: **2026-06-08**.
   chain). Per `docs/memory/design/02-genetics.md`.
 - 🟡 ⬜ **Grower-skill mastery** — use-based skill trees (effort/time → capability), distinct from the
   spend-based research tree; the equipment bridge. Per `docs/memory/design/03-grower-skills.md`.
-- 🟡 🔨 **Trust layer** — provable fairness landed for breeding (`GET /strains/<id>/provenance`
-  replays the cross; +3 tests). Remaining: generalize replay to sim/weather/discovery, a public
-  faucet-vs-sink economy view, advisor confidence/uncertainty surfacing, and a no-dark-patterns
-  charter. Mostly *exposing* primitives we already have. Per `docs/memory/design/04-honesty-and-trust.md`.
+- 🟡 🔨 **Trust layer** — provable fairness landed for breeding (`/strains/<id>/provenance`) and the
+  whole pedigree (`/strains/<id>/lineage`, the GenBank's verifiable family tree). Remaining: generalize
+  replay to sim/weather/discovery, a genome fingerprint, a public faucet-vs-sink economy view, advisor
+  confidence/uncertainty surfacing, and a no-dark-patterns charter. Per `docs/memory/design/04-honesty-and-trust.md`.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

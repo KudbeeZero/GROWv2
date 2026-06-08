@@ -40,5 +40,5 @@ jobs:
       - name: Seed catalog (idempotent)
         run: python -m growpodempire.db.seed
 
-      - name: Run tests
-        run: python -m pytest -q
+      - name: Run tests (with coverage gate)
+        run: python -m pytest -q --cov --cov-report=term-missing

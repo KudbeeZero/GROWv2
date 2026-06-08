@@ -87,3 +87,11 @@ can fabricate or tamper a cultivar's genetics without detection. **Consequences:
 "replay & verify" pattern (generalizable to sim/weather/discovery draws), and promotes a new
 invariant — randomness stays seeded so gameplay is auditable (ARCHITECTURE invariant #9). The trust
 layer now has a shipped affordance (🔨 — breeding done; see `docs/memory/design/04-honesty-and-trust.md`).
+
+### 2026-06-08 — Coverage gate completes "make truth automatic"
+**Decision:** Add a `pytest --cov` gate with a ratchet floor (`pyproject.toml` `[tool.coverage]
+fail_under=78`, operational `scripts/` omitted), wired into `make test` and the CI test step.
+**Why:** the ruff lint gate guards syntax and `scripts/check_memory.py` guards the docs; coverage
+guards the test safety net itself from silently eroding — the third leg of the 2026-06-08 standup's
+§4A "make truth automatic." **Consequences:** CI fails below the floor; **raise the floor as
+coverage climbs, never lower it.** One-shot ops scripts are excluded (run by ops, not the unit suite).

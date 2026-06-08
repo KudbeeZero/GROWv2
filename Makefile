@@ -13,8 +13,8 @@ setup: ## Create a venv and install runtime + dev deps + the package (editable)
 	$(PY) -m pip install -e .
 	@echo "Done. Run 'make test' (or activate with 'source $(VENV)/bin/activate')."
 
-test: ## Run the full test suite
-	$(PY) -m pytest -q
+test: ## Run the full test suite (with the coverage gate)
+	$(PY) -m pytest -q --cov --cov-report=term-missing
 
 lint: ## Run the same lint gate CI uses
 	$(PY) -m ruff check --select=E9,F63,F7,F82 src tests

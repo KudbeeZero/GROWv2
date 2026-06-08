@@ -50,3 +50,49 @@ def test_base_catalog_strain_is_not_verifiable(session):
     proof = svc.verify_strain(base.id)
     assert proof["verifiable"] is False
     assert "reason" in proof
+
+
+# ----- Verifiable pedigree / lineage ------------------------------------------
+def test_lineage_verifies_back_to_base_roots(session):
+    """A bred strain's whole ancestry replays: the child + its two base roots."""
+    svc, child = _breed(session, username="genealogist")
+    out = svc.verify_lineage(child.id)
+    assert out["fully_verified"] is True
+    assert out["node_count"] == 3          # child + 2 base-catalog parents
+    assert out["root_count"] == 2
+    assert out["truncated"] is False
+    head = next(n for n in out["lineage"] if n["strain_id"] == child.id)
+    assert head["verified"] is True
+
+
+def test_lineage_spans_multiple_generations(session):
+    """Breed then stabilize: the S2 line traces through its parent to the roots."""
+    svc, child = _breed(session, username="liner")
+    s2 = svc.stabilize_strain(child.created_by_player_id, child.id)
+    out = svc.verify_lineage(s2.id)
+    assert out["fully_verified"] is True
+    ids = {n["strain_id"] for n in out["lineage"]}
+    assert s2.id in ids and child.id in ids          # both bred generations present
+    assert out["root_count"] == 2                     # the two original base roots
+
+
+def test_lineage_flags_a_tampered_ancestor(session):
+    """Tampering an ancestor's genome breaks fully_verified for the descendant."""
+    svc, child = _breed(session, username="auditor")
+    player_id = child.created_by_player_id
+    s2 = svc.stabilize_strain(player_id, child.id)
+    tampered = copy.deepcopy(child.genome)
+    tampered["yield"]["value"] = -123.0
+    child.genome = tampered
+    session.flush()
+    out = svc.verify_lineage(s2.id)
+    assert out["fully_verified"] is False
+
+
+def test_lineage_of_base_strain_is_a_single_root(session):
+    svc = GameService(session)
+    base = session.query(Strain).filter(Strain.is_base_catalog.is_(True)).first()
+    out = svc.verify_lineage(base.id)
+    assert out["node_count"] == 1
+    assert out["root_count"] == 1
+    assert out["fully_verified"] is True

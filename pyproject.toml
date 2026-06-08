@@ -5,3 +5,16 @@
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+# Coverage gate — the third leg of "make truth automatic" (alongside the ruff
+# lint gate and scripts/check_memory.py). Operational one-shot scripts are
+# excluded; they're run by ops, not exercised by the unit suite.
+[tool.coverage.run]
+source = ["growpodempire"]
+omit = ["*/scripts/*"]
+
+[tool.coverage.report]
+show_missing = true
+# Ratchet floor: set just below current (~79%). Raise it as coverage climbs;
+# never lower it. Keeps the safety net from silently eroding.
+fail_under = 78
