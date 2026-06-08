@@ -118,20 +118,30 @@ function CreateForm({
 }
 
 function ImportForm() {
-  const { login } = useSession();
+  const { login, logout } = useSession();
   const router = useRouter();
   const toast = useToast();
   const [playerId, setPlayerId] = useState("");
   const [apiKey, setApiKey] = useState("");
 
   const mutation = useMutation<Player, ApiError>({
-    mutationFn: () => api.players.get(playerId.trim()),
+    // GET /players/<id> is key-guarded, so the credentials must be in the
+    // session before we can validate them. Set them first, then verify; roll
+    // back if the backend rejects the pair.
+    mutationFn: async () => {
+      login(playerId.trim(), apiKey.trim());
+      try {
+        return await api.players.get(playerId.trim());
+      } catch (e) {
+        logout();
+        throw e;
+      }
+    },
     onSuccess: (player) => {
-      login(player.id, apiKey.trim());
       toast.success(`Welcome back, ${player.username}`);
       router.replace("/dashboard");
     },
-    onError: (e) => toast.error(`Player not found: ${e.message}`),
+    onError: (e) => toast.error(`Sign in failed: ${e.message}`),
   });
 
   return (
