@@ -1,26 +1,48 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// E2E smoke for the web client. Self-contained: the game API is mocked at the
-// network layer (page.route), so no backend is required and runs are
-// deterministic. The full wire contract is verified separately against a live
-// backend; this guards the rendered UI + the core navigation/auth flows.
+// Both servers must be reachable before tests start.
+const backendUrl = "http://localhost:10000";
+const webUrl = "http://localhost:3000";
+
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 30_000,
-  expect: { timeout: 10_000 },
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  reporter: "list",
+  // Pre-warm all Next.js dev routes before any browser tests run.
+  globalSetup: "./e2e/global-setup.ts",
+  // Dev-mode page compilation + React hydration can take 20-30s on a cold server.
+  timeout: 90_000,
+  expect: { timeout: 30_000 },
+  retries: process.env.CI ? 2 : 0,
+  // Single worker: tests share a SQLite backend — serial avoids row-level races.
+  workers: 1,
+  reporter: [["list"], ["html", { open: "never" }]],
+
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: webUrl,
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command: "npm run build && npm run start",
-    url: "http://localhost:3000",
-    timeout: 180_000,
-    reuseExistingServer: !process.env.CI,
-  },
+
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+
+  webServer: [
+    {
+      // Fresh SQLite DB + migrations + catalog seed, then Flask on :10000.
+      command: "bash ../scripts/start-e2e-backend.sh",
+      url: backendUrl,
+      timeout: 90_000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      // Next.js dev server on :3000. API_BASE defaults to :10000 in client.ts.
+      command: "npm run dev",
+      url: webUrl,
+      timeout: 60_000,
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });
