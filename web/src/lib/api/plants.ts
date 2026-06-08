@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Plant, PlantState, PlantEvent, Harvest } from "@/lib/types";
+import type { Plant, PlantState, PlantEvent, Harvest, AdvisorReport } from "@/lib/types";
 
 export const plants = {
   list: (playerId: string) =>
@@ -52,5 +52,11 @@ export const plants = {
   mintHarvest: (playerId: string, harvestId: string) =>
     apiFetch<Harvest>(`/players/${playerId}/harvests/${harvestId}/mint`, {
       method: "POST",
+    }),
+
+  // AI "Master Grower" diagnosis for a plant (read-only).
+  advisor: (playerId: string, plantId: string) =>
+    apiFetch<AdvisorReport>(`/players/${playerId}/plants/${plantId}/advisor`, {
+      auth: true,
     }),
 };

@@ -79,6 +79,25 @@ once they appear here. Last reconciled: **2026-06-08**.
   a title + XP), taught by an AI Professor (mock for CI, Claude in prod). Public `/university/catalog`
   + authed enroll/complete/claim/lecture; +13 tests. Grounded in a cited curriculum research report.
   *Next (⬜): quizzes, more departments, Doctorate tier, diploma NFTs.* Per `docs/memory/design/06-university.md`.
+- 🟡 ✅ **Web client — full UI build** (2026-06-08, branch `claude/growv2-web-ui-build-MZWZE`) — the
+  Next 15 client now covers all seven screen groups (onboarding hero · grow dashboard with VPD/DLI/PPFD
+  · strain lab + encyclopedia + DNA/lineage constellations + Verify provenance · GenBank galaxy ·
+  market fixed/auctions/contracts · Cannabis Cup + Hall of Fame · University catalog/transcript/course
+  + AI Professor lecture reader · Profile with lifetime titles). Centerpiece: dependency-free
+  `web/src/components/viz/Constellation.tsx` (the genetic-constellation signature language). Green
+  typecheck/lint/build + live-API contract smoke. *Next (⬜): Playwright e2e, retire legacy
+  `/account`+`/contracts`, constellation perf (spatial hashing).* See standup
+  `2026-06-08-lut-report-web-ui-build.md`.
+- 🟡 ⬜ **Education-gated Master Grower knowledge** (owner idea, 2026-06-08) — tie advisor depth +
+  unlocks (tips/tricks, rare bio-DNA traits, breeding **pollen**, "DNA-in-the-seed") to University
+  progress. Composes existing systems: degree perks (research effect keys) raise an advisor knowledge
+  tier and unlock breeding consumables that bias the still-seeded, provably-fair cross. Needs a design
+  doc + balance pass; no new infra.
+- 🟡 ⬜ **Sponsored / branded content (revenue)** (owner idea, 2026-06-08) — real cannabis brands
+  sponsoring cultivars, branded equipment/pods, and promotions, using the on-chain asset layer to
+  sidestep traditional ad/banking restrictions. A "sponsored cultivar" is a GenBank entry with
+  verifiable provenance + brand tag. Needs a partner/content model + a no-dark-patterns guardrail
+  (ties into the trust layer charter). Business/LiveOps track.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

@@ -1,5 +1,12 @@
 import { apiFetch } from "./client";
-import type { Strain, LineageType, Rarity } from "@/lib/types";
+import type {
+  Strain,
+  LineageType,
+  Rarity,
+  StrainKnowledge,
+  Provenance,
+  Lineage,
+} from "@/lib/types";
 
 export interface StrainFilters {
   catalog_only?: boolean;
@@ -17,6 +24,17 @@ export const strains = {
     apiFetch<Strain[]>("/strains", { query: filters as Record<string, string | number | boolean | undefined> }),
 
   get: (strainId: string) => apiFetch<Strain>(`/strains/${strainId}`),
+
+  // Scientist-grade encyclopedia (lineage, terpenes, cannabinoids, grow params).
+  knowledge: (strainId: string) =>
+    apiFetch<StrainKnowledge>(`/strains/${strainId}/knowledge`),
+
+  // Provably-fair: re-derive the bred genome from its public seed and compare.
+  provenance: (strainId: string) =>
+    apiFetch<Provenance>(`/strains/${strainId}/provenance`),
+
+  // Verifiable pedigree back to base-catalog roots (the GenBank family tree).
+  lineage: (strainId: string) => apiFetch<Lineage>(`/strains/${strainId}/lineage`),
 
   favorites: (playerId: string) =>
     apiFetch<Strain[]>(`/players/${playerId}/favorites`, { auth: true }),

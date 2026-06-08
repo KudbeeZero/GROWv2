@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -58,7 +59,12 @@ export function StrainCard({
     <Card className="flex flex-col gap-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="font-semibold text-gray-100">{strain.name}</div>
+          <Link
+            href={`/lab/strains/${strain.id}`}
+            className="font-semibold text-gray-100 hover:text-grow-300"
+          >
+            {strain.name}
+          </Link>
           <div className="text-xs text-gray-500">
             {titleCase(strain.lineage_type)} · Gen {strain.generation}
           </div>

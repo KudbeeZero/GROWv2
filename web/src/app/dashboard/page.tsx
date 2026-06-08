@@ -6,6 +6,8 @@ import { RequireAuth } from "@/components/layout/RequireAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { LoadingBlock } from "@/components/ui/Spinner";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/States";
 import { CreatePodForm } from "@/components/pod/CreatePodForm";
 import { PodCard } from "@/components/pod/PodCard";
 import { PlantCard } from "@/components/plant/PlantCard";
@@ -24,8 +26,8 @@ function DashboardInner() {
   if (pods.isLoading) return <LoadingBlock label="Loading your grow…" />;
 
   const podList = pods.data ?? [];
+  const liveCount = (plants.data ?? []).filter((p) => p.is_alive && !p.harvested).length;
 
-  // Group plant ids by pod, merging the authoritative list with any local ids.
   const byPod = new Map<string, string[]>();
   for (const p of plants.data ?? []) {
     const arr = byPod.get(p.pod_id) ?? [];
@@ -37,24 +39,23 @@ function DashboardInner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Grow Dashboard</h1>
-          <p className="text-sm text-gray-400">
-            Plants advance in real time as you watch — care for them before they wilt.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/lab">
-            <Button variant="secondary" size="sm">
-              Buy seeds
+      <PageHeader
+        eyebrow={`⌖ ${liveCount} LIVE PLANTS · ${podList.length} PODS`}
+        title="Grow Dashboard"
+        subtitle="Plants advance in real time as you watch. VPD, DLI and PPFD are live — keep them in band and care before they wilt."
+        action={
+          <div className="flex items-center gap-2">
+            <Link href="/lab">
+              <Button variant="secondary" size="sm">
+                Buy seeds
+              </Button>
+            </Link>
+            <Button size="sm" onClick={() => setShowCreate((s) => !s)}>
+              + New Pod
             </Button>
-          </Link>
-          <Button size="sm" onClick={() => setShowCreate((s) => !s)}>
-            + New Pod
-          </Button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {showCreate && (
         <Card className="max-w-md">
@@ -64,18 +65,21 @@ function DashboardInner() {
       )}
 
       {podList.length === 0 ? (
-        <Card>
-          <p className="text-sm text-gray-300">
-            You don&apos;t have any pods yet. Create one to start growing.
-          </p>
-        </Card>
+        <EmptyState
+          icon="🌱"
+          title="No grow pods yet"
+          hint="Create a pod, then plant a seed from the Lab to start the simulation."
+          action={
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              + New Pod
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-6">
-          {podList.map((pod) => {
-            const ids = byPod.get(pod.id) ?? [];
-            // include local ids whose pod we don't yet know on the first one
-            return <PodCard key={pod.id} pod={pod} plantIds={ids} />;
-          })}
+          {podList.map((pod) => (
+            <PodCard key={pod.id} pod={pod} plantIds={byPod.get(pod.id) ?? []} />
+          ))}
         </div>
       )}
 
@@ -86,9 +90,8 @@ function DashboardInner() {
             subtitle="Plants saved locally but not in a loaded pod."
           />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {/* Rendered without pod context; PlantCard fetches its own state */}
             {orphanLocal.map((id) => (
-              <OrphanPlant key={id} playerId={playerId!} plantId={id} />
+              <PlantCard key={id} playerId={playerId!} plantId={id} />
             ))}
           </div>
         </Card>
@@ -103,10 +106,6 @@ function DashboardInner() {
       </Card>
     </div>
   );
-}
-
-function OrphanPlant({ playerId, plantId }: { playerId: string; plantId: string }) {
-  return <PlantCard playerId={playerId} plantId={plantId} />;
 }
 
 export default function DashboardPage() {

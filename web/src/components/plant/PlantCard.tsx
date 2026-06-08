@@ -8,6 +8,7 @@ import { PlantVisual } from "./PlantVisual";
 import { StatBars } from "./StatBars";
 import { ConditionBadges } from "./ConditionBadges";
 import { CareButtons } from "./CareButtons";
+import { PlantMetrics } from "./PlantMetrics";
 import { usePlantState } from "@/hooks/usePlantState";
 import { useStrainMap } from "@/hooks/queries";
 import { titleCase, num } from "@/lib/format";
@@ -64,6 +65,11 @@ export function PlantCard({ playerId, plantId }: { playerId: string; plantId: st
       </div>
 
       <ConditionBadges flags={plant.condition_flags} />
+      {plant.metrics && (
+        <div className="rounded-md border border-ink-700 bg-ink-900/50 px-2.5 py-1.5">
+          <PlantMetrics plant={plant} compact />
+        </div>
+      )}
       <StatBars plant={plant} />
       <CareButtons plant={plant} />
     </Card>

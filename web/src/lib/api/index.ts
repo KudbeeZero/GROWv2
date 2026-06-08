@@ -8,6 +8,10 @@ import { market } from "./market";
 import { contracts } from "./contracts";
 import { leaderboards } from "./leaderboards";
 import { wallet } from "./wallet";
+import { advisor } from "./advisor";
+import { harvests } from "./harvests";
+import { cup } from "./cup";
+import { university } from "./university";
 
 export const api = {
   players,
@@ -20,6 +24,10 @@ export const api = {
   contracts,
   leaderboards,
   wallet,
+  advisor,
+  harvests,
+  cup,
+  university,
 };
 
 export { ApiError } from "./client";
