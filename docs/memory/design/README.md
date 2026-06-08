@@ -41,6 +41,7 @@ shipped feature (especially anything on-chain — the chain layer is mocked; see
 | 1 | `01-simulation-horticulture.md` | The scientist-grade agronomy model — every variable a grower wants — phased over the current lean engine. |
 | 2 | `02-genetics.md` | Endless, generative, ownable genetics: from today's 14-trait model toward an unbounded genome + provenance. |
 | 3 | `03-grower-skills.md` | Mastery + time as the design axis: grower skill trees, the knowledge economy, the equipment bridge. |
+| 4 | `04-honesty-and-trust.md` | The trust layer: provable fairness, a transparent economy, an honest AI advisor, co-evolution with the model line. |
 | — | `assets/` | Visual-influence references (e.g. the genetic-constellation aesthetic). |
 
 ## Maintenance
