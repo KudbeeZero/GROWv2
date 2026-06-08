@@ -71,8 +71,10 @@ once they appear here. Last reconciled: **2026-06-08**.
   champion rewards (one-of-a-kind legendary trophy strain + permanent title + Hall of Fame). Public
   `/cup/*` + authed enter; +9 tests. *Next (⬜): on-chain trophy NFT (Sprint 4), judged terpene-cluster
   categories, grower-reputation tie-in.* Per `docs/memory/design/05-events-and-competition.md`.
-- 🟠 ⬜ **CI: enforce a single Alembic head** — add `alembic heads | wc -l == 1` (or `alembic upgrade
-  head`) as a guard; a fork at `fbb8fceedacd` was only caught by manual testing this session.
+- 🟠 ✅ **CI: enforce a single Alembic head** (2026-06-08) — `scripts/check_single_head.py` (reads the
+  migration graph via `ScriptDirectory`, fails with an actionable `alembic merge` hint on a fork),
+  wired into `make check-migrations` + a CI step before `alembic upgrade head`. Catches the fork class
+  of bug (e.g. the old `fbb8fceedacd` fork) automatically instead of by manual testing.
 - 🟡 ✅ **GrowPod University** (2026-06-08) — `services/university_service.py` + `lecturer_service.py`
   + `data/curriculum.yaml` + `CourseEnrollment`/`DegreeProgress` + migration `e7a9c1b3f2d8`: enroll
   (tuition sink) → time + practical study → degrees (permanent perks via the research effect keys +
@@ -89,8 +91,10 @@ once they appear here. Last reconciled: **2026-06-08**.
   stale-deps bug (genome graphs reused locus ids across strains → now keyed on content + edges),
   hex-sanitized canvas colors + position clamp, retired `/account`+`/contracts` → redirects, and an
   a11y pass (Modal Escape/`role=dialog`, ARIA tabs, `aria-pressed` chips, input/select labels,
-  reduced-motion). *Next (⬜): Playwright e2e, constellation perf (spatial hashing).* See standup
-  `2026-06-08-lut-report-web-ui-build.md`.
+  reduced-motion). Follow-up pass: **constellation perf** (O(n²) repulsion → uniform spatial-hash
+  grid, semantics preserved) and a **Vitest unit-test harness** (71 tests over `format.ts` +
+  `graphAdapters.ts`, `pool: forks` for sandbox/CI robustness, wired into web CI). *Next (⬜):
+  Playwright e2e over the full loop.* See standup `2026-06-08-lut-report-web-ui-build.md`.
 - 🟡 ⬜ **Education-gated Master Grower knowledge** (owner idea, 2026-06-08) — tie advisor depth +
   unlocks (tips/tricks, rare bio-DNA traits, breeding **pollen**, "DNA-in-the-seed") to University
   progress. Composes existing systems: degree perks (research effect keys) raise an advisor knowledge

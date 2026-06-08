@@ -277,29 +277,113 @@ export function Constellation({
       return { x: (sx - w / 2 - panX) / base, y: -(sy - h / 2 - panY) / base };
     }
 
+    // ---- spatial hash (graph repulsion acceleration) ----
+    // Repulsion (f = repel / d²) falls off fast, so beyond a cutoff it is
+    // visually negligible and can be skipped. We bin particles into a uniform
+    // grid whose cell size equals the cutoff radius; then each particle only
+    // pairs with particles in its own + 8 neighboring cells. For tiny graphs
+    // (genome ~14, lineage) every node falls within a cell or two, so the grid
+    // degenerates to near all-pairs within the cutoff — the look is preserved.
+    //
+    // Particles live roughly in [-2.5, 2.5]. CELL = REPEL_CUTOFF; pairs farther
+    // apart than the cutoff contribute negligibly and are dropped.
+    const REPEL_CUTOFF = 0.8;
+    const REPEL_CUTOFF2 = REPEL_CUTOFF * REPEL_CUTOFF;
+    const INV_CELL = 1 / REPEL_CUTOFF;
+    // Reused across ticks to avoid per-frame heap churn. Keyed by packed cell
+    // coords; each bucket holds particle indices (lower index = visited-first,
+    // matching the original i<j ordering so pinned-source semantics are kept).
+    const grid = new Map<number, number[]>();
+    // Pack a cell coordinate pair into one number. World is small and bounded,
+    // so a generous offset keeps both coords non-negative within a 16-bit field.
+    const cellKey = (cx: number, cy: number) => (cx + 4096) * 8192 + (cy + 4096);
+
     // ---- physics (graph mode) ----
     function step(settleBoost = 1) {
       if (mode === "graph") {
         const repel = 0.0009 * settleBoost;
+
+        // (Re)build the spatial grid for this tick. Clear existing buckets in
+        // place (reusing the arrays) so we don't churn the heap every frame.
+        for (const bucket of grid.values()) bucket.length = 0;
         for (let i = 0; i < particles.length; i++) {
-          const a = particles[i];
-          if (a.pinned) continue;
-          for (let j = i + 1; j < particles.length; j++) {
-            const b = particles[j];
-            let dx = a.x - b.x;
-            let dy = a.y - b.y;
-            let d2 = dx * dx + dy * dy + 0.0001;
-            const f = repel / d2;
-            dx *= f;
-            dy *= f;
-            a.vx += dx;
-            a.vy += dy;
-            if (!b.pinned) {
-              b.vx -= dx;
-              b.vy -= dy;
+          const p = particles[i];
+          const cx = Math.floor(p.x * INV_CELL);
+          const cy = Math.floor(p.y * INV_CELL);
+          const key = cellKey(cx, cy);
+          let bucket = grid.get(key);
+          if (bucket === undefined) {
+            bucket = [];
+            grid.set(key, bucket);
+          }
+          bucket.push(i);
+        }
+
+        // Repulsion: for each non-empty cell, pair its particles with those in
+        // the same cell and the four "forward" neighbor cells (E, NE, N, NW).
+        // Visiting only forward neighbors counts each unordered cell-pair once,
+        // mirroring the original j > i sweep without double-counting.
+        const NEIGHBORS: ReadonlyArray<readonly [number, number]> = [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [-1, 1],
+        ];
+        for (const [keyStr, bucket] of grid) {
+          if (bucket.length === 0) continue;
+          // Recover this cell's coords to address neighbors.
+          const cx = Math.floor(keyStr / 8192) - 4096;
+          const cy = (keyStr % 8192) - 4096;
+          for (const [ox, oy] of NEIGHBORS) {
+            const sameCell = ox === 0 && oy === 0;
+            const other = sameCell ? bucket : grid.get(cellKey(cx + ox, cy + oy));
+            if (other === undefined || other.length === 0) continue;
+            for (let ii = 0; ii < bucket.length; ii++) {
+              const i = bucket[ii];
+              // Within one cell, only pair j > i to avoid self/double pairs;
+              // across cells, every (i, j) is a distinct unordered pair.
+              const jStart = sameCell ? ii + 1 : 0;
+              for (let jj = jStart; jj < other.length; jj++) {
+                const j = other[jj];
+                // Preserve the original semantics: the pair was processed only
+                // when the lower-indexed particle was unpinned (the outer loop
+                // `continue`d on a pinned source). So skip if min is pinned.
+                const lo = i < j ? i : j;
+                if (particles[lo].pinned) continue;
+                const a = particles[i];
+                const b = particles[j];
+                let dx = a.x - b.x;
+                let dy = a.y - b.y;
+                const r2 = dx * dx + dy * dy;
+                if (r2 > REPEL_CUTOFF2) continue; // beyond cutoff: negligible
+                const d2 = r2 + 0.0001;
+                const f = repel / d2;
+                dx *= f;
+                dy *= f;
+                // Match the original's asymmetry: the lower-indexed particle
+                // played the role of `a` (always pushed; it was unpinned here),
+                // the higher-indexed one played `b` (pushed only if unpinned).
+                const aLo = i < j;
+                const pa = aLo ? a : b;
+                const pb = aLo ? b : a;
+                const sdx = aLo ? dx : -dx;
+                const sdy = aLo ? dy : -dy;
+                pa.vx += sdx;
+                pa.vy += sdy;
+                if (!pb.pinned) {
+                  pb.vx -= sdx;
+                  pb.vy -= sdy;
+                }
+              }
             }
           }
-          // gravity to center
+        }
+
+        // Gravity to center — applied once per unpinned particle, exactly as
+        // before (this lived in the old outer repulsion loop).
+        for (const a of particles) {
+          if (a.pinned) continue;
           a.vx -= a.x * 0.002;
           a.vy -= a.y * 0.002;
         }
