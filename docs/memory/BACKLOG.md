@@ -25,8 +25,10 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🟠 ⬜ **Idempotency keys on mutations** — protect ledger/economy from double-submits & retries.
 - 🟠 ⬜ **Load/soak test the `/state` catch-up path** to find the cost knee before players do.
 - 🟠 ⬜ **Web e2e smoke** (Playwright) over the full loop; today web CI is lint/typecheck/build only.
-- 🟠 ⬜ **Sim depth — Phase A (derive VPD + DLI; wire the stored light scalar into the tick).** The
-  cheapest scientist-grade realism on the board; no new stored inputs. Per `docs/memory/design/01-simulation-horticulture.md`.
+- 🟠 ✅ **Sim depth — Phase A (derive VPD + DLI; wire the stored light scalar into the tick).** Done
+  2026-06-08: `simulation/horticulture.py` (VPD/DLI/SVP), light + VPD health terms in `engine.py`
+  (tuned in `balance.yaml`), VPD/DLI/PPFD exposed on `/state`. +8 tests (147 total, green). *Next:*
+  Phase B (photosynthesis + transpiration + EC/pH→uptake) — land the sim-cost-cap first.
 
 ## 🟡 Low / later (valuable, not urgent)
 - 🟡 ⬜ Sprint 5 multiplayer: P2P trading, friends, co-op rooms, anti-cheat hardening.

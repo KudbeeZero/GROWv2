@@ -91,8 +91,8 @@ def pod_dict(pod) -> dict:
     }
 
 
-def plant_dict(plant) -> dict:
-    return {
+def plant_dict(plant, metrics=None) -> dict:
+    out = {
         "id": plant.id,
         "player_id": plant.player_id,
         "pod_id": plant.pod_id,
@@ -109,6 +109,11 @@ def plant_dict(plant) -> dict:
         "is_alive": plant.is_alive,
         "harvested": plant.harvested,
     }
+    # Scientist-grade derived readouts (VPD, DLI, PPFD) when the caller supplies
+    # them — additive, so existing consumers are unaffected.
+    if metrics is not None:
+        out["metrics"] = metrics
+    return out
 
 
 def harvest_dict(harvest) -> dict:

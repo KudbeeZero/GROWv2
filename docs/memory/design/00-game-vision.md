@@ -26,8 +26,10 @@ differentiators that compound into something a fast-follower can't clone by copy
 The plant is a small physiological model — light drives photosynthesis, vapour-pressure deficit
 drives transpiration, nutrient uptake follows real kinetics — emitting scientist-grade time-series
 (VPD, DLI, EC, tissue status). Today the engine is a lean but genuine hourly model
-(`src/growpodempire/simulation/engine.py`); the depth target lives in `01-simulation-horticulture.md`.
-A countdown clock can be cloned in a weekend. A correct agronomy model is years of tuning.
+(`src/growpodempire/simulation/engine.py`); **Phase A has shipped** — the tick now reads light and
+the `/state` API surfaces derived **VPD + DLI** (`simulation/horticulture.py`). The depth target
+lives in `01-simulation-horticulture.md`. A countdown clock can be cloned in a weekend. A correct
+agronomy model is years of tuning.
 
 **2. Generative, provably-unique genetics.** 🔨→⬜
 Strains are **discovered, not picked from a list.** A high-dimensional, polygenic genome plus

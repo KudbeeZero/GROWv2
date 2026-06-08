@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 
 from ..enums import GrowthStage
 from ..db.models import Plant, GrowPod, PlantEvent
-from . import reactions
+from . import reactions, horticulture
 from .conditions import PlantCondition
 
 # Stages that actually grow / take time, in order.
@@ -70,17 +70,25 @@ def _growth_cm_per_hour(stage: GrowthStage, sim: Dict, health: float) -> float:
 
 def _env_for(plant: Plant, pod: Optional[GrowPod], sim: Dict) -> Dict:
     defaults = sim.get("environment", {}).get("defaults", {})
+    light_default = defaults.get("light_intensity", 600)
     if pod is not None and pod.temperature is not None:
         return {
             "temperature": pod.temperature,
             "humidity": pod.humidity,
             "ph_level": pod.ph_level if pod.ph_level is not None else defaults.get("ph_level", 6.5),
+            "light": pod.light_intensity if pod.light_intensity is not None else light_default,
         }
     return {
         "temperature": defaults.get("temperature", 24),
         "humidity": defaults.get("humidity", 50),
         "ph_level": defaults.get("ph_level", 6.5),
+        "light": light_default,
     }
+
+
+def environment_for(plant: Plant, pod: Optional[GrowPod], sim: Dict) -> Dict:
+    """Public view of a plant's current environment (temp/humidity/pH/light)."""
+    return _env_for(plant, pod, sim)
 
 
 def _health_target(plant: Plant, env: Dict, sim: Dict) -> float:
@@ -110,10 +118,25 @@ def _health_target(plant: Plant, env: Dict, sim: Dict) -> float:
         + outside(env["ph_level"], p_lo, p_hi) * 10.0  # pH swings are potent
     )
 
+    # Light & VPD (Phase A): the engine now reads the pod's light level and the
+    # derived leaf vapour-pressure deficit. Bands are generous and the weights
+    # modest — adequate light + in-band VPD contribute no penalty.
+    lightcfg = sim.get("light", {})
+    vpdcfg = sim.get("vpd", {})
+    l_lo, l_hi = lightcfg.get("optimal_ppfd", [300, 900])
+    light_stress = outside(env.get("light", (l_lo + l_hi) / 2.0), l_lo, l_hi)
+    v_lo, v_hi = vpdcfg.get("optimal", [0.8, 1.6])
+    vpd = horticulture.vpd_kpa(
+        env["temperature"], env["humidity"], vpdcfg.get("leaf_offset_c", 2.0)
+    )
+    vpd_stress = outside(vpd, v_lo, v_hi)
+
     penalty = (
         water_stress * h.get("water_stress_weight", 0.6)
         + nutrient_stress * h.get("nutrient_stress_weight", 0.5)
         + env_stress * h.get("env_stress_weight", 0.5)
+        + light_stress * h.get("light_stress_weight", 0.02)
+        + vpd_stress * h.get("vpd_stress_weight", 0.5)
         + plant.pest_level * h.get("pest_weight", 0.45)
         + plant.disease_level * h.get("disease_weight", 0.55)
     )

@@ -110,6 +110,19 @@ simulation:
       temperature: 24
       humidity: 50
       ph_level: 6.5
+      light_intensity: 600    # mid-band PPFD -> no penalty when unsensored
+
+  # Light (Phase A). PPFD is the stored 0..1000 light scalar; the engine now
+  # reads it. Outside the adequate band saps health; the band drives DLI too.
+  light:
+    optimal_ppfd: [300, 900]
+    photoperiod_hours: 18     # assumed veg light cycle (for the DLI readout)
+
+  # Vapour-pressure deficit (Phase A). Derived from temperature + humidity; the
+  # band spans the veg->flower sweet spot. See simulation/horticulture.py.
+  vpd:
+    optimal: [0.8, 1.6]       # kPa leaf VPD
+    leaf_offset_c: 2.0        # leaf assumed this much cooler than air
 
   pests:
     base_spawn_chance_per_hour: 0.012
@@ -127,6 +140,8 @@ simulation:
     water_stress_weight: 0.6
     nutrient_stress_weight: 0.5
     env_stress_weight: 0.5
+    light_stress_weight: 0.02         # per PPFD point outside the adequate band
+    vpd_stress_weight: 0.5            # per kPa of leaf VPD outside the band
     pest_weight: 0.45                 # health target penalty per pest_level point
     disease_weight: 0.55
 

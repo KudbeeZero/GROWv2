@@ -62,6 +62,13 @@ class SimulationService:
         self.sync(plant)
         return plant
 
+    def metrics(self, plant: Plant) -> dict:
+        """Scientist-grade derived readouts (VPD, DLI, PPFD) for a plant's pod."""
+        from ..simulation import horticulture
+        pod = self.session.get(GrowPod, plant.pod_id)
+        env = engine.environment_for(plant, pod, self._sim)
+        return horticulture.derived_metrics(env, self._sim)
+
     def get_events(self, plant_id: str, limit: int = 50) -> List[PlantEvent]:
         return (
             self.session.query(PlantEvent)

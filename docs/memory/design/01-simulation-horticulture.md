@@ -40,10 +40,11 @@ The hourly step (`_step`, `simulation/engine.py:123`) currently models, per plan
 | Curing | Post-harvest sqrt-curve quality bonus, over-dry penalty | `simulation/curing.py`, `balance.yaml:66` |
 | Weather | Random events shift pod temp/humidity, then feed the sim | `services/weather_service.py`, `balance.yaml:160` |
 
-**The honest gaps (🔨/⬜):** light intensity + photoperiod are *stored on the pod but never read by
-the engine*; CO₂ is inert config; nutrients are one scalar (no EC, no N-P-K, no Ca/Mg); there is no
-VPD, no root-zone EC/pH drift, no transpiration model, no biomass/leaf-area, no canopy. That gap **is
-the opportunity** — it's where scientist-grade depth lives.
+**The honest gaps (🔨/⬜):** photoperiod is assumed, not triggered; CO₂ is inert config; nutrients
+are one scalar (no EC, no N-P-K, no Ca/Mg); there is no root-zone EC/pH drift, no transpiration
+model, no biomass/leaf-area, no canopy. That gap **is the opportunity** — it's where scientist-grade
+depth lives. (Phase A landed: light is now read by the tick, and VPD + DLI are derived and exposed —
+see `simulation/horticulture.py`.)
 
 ---
 
@@ -55,9 +56,9 @@ realism) rather than independently stored.
 |----------|----------------|-------|
 | Air temperature | Metabolic rate, stress, VPD input | ✅ stress band |
 | Relative humidity | Transpiration, mildew, VPD input | ✅ stress band + disease/pest triggers |
-| **VPD*** (vapour-pressure deficit) | The *real* driver of transpiration & stomatal behaviour; the number serious growers actually target | ⬜ derive from temp+RH (+leaf-temp offset) |
-| **PPFD** (µmol·m⁻²·s⁻¹) | Instantaneous photosynthetic light; today only a 0–1000 "light_intensity" scalar exists, unused | 🔨 stored, not simulated (`balance.yaml:171`) |
-| **DLI*** (mol·m⁻²·day⁻¹) | Daily light integral — the yield-determining light dose | ⬜ derive from PPFD × photoperiod |
+| **VPD*** (vapour-pressure deficit) | The *real* driver of transpiration & stomatal behaviour; the number serious growers actually target | ✅ derived from temp+RH+leaf-offset, feeds health + exposed in `/state` (`simulation/horticulture.py`, Phase A) |
+| **PPFD** (µmol·m⁻²·s⁻¹) | Instantaneous photosynthetic light; the 0–1000 "light_intensity" scalar | ✅ now read by the tick — outside the adequate band saps health (`engine.py` `_health_target`, Phase A) |
+| **DLI*** (mol·m⁻²·day⁻¹) | Daily light integral — the yield-determining light dose | ✅ derived (PPFD × photoperiod) + exposed (`horticulture.dli`); not yet a yield input |
 | Light **spectrum** (blue / red / far-red / UV) | Morphology, R:FR stretch, UV→trichome response | ⬜ |
 | **Photoperiod** | Triggers the veg→flower transition in photoperiod genetics; autoflower bypasses it | ⬜ (flowering is currently a fixed genetic duration) |
 | **CO₂** (ppm) | Photosynthesis co-substrate; enrichment lifts the light-response ceiling | 🔨 stored + clamped, inert (`balance.yaml:170`) |
@@ -127,10 +128,12 @@ here so the model is designed to receive them as `balance.yaml` surfaces, not re
 ## Phasing — high realism first, heavy compute last
 Sequenced so the biggest realism-per-cost wins land first and the cost-cap is respected.
 
-- **Phase A — derive, don't add (cheap, high realism).** Compute **VPD** and **DLI** from values the
-  engine already has (temp, RH, the stored light scalar + an assumed photoperiod). Expose them in
-  state/UI and let VPD modulate transpiration/mildew. No new stored inputs, minimal extra per-hour
-  cost. *Wire the already-stored light scalar into the tick* — the cheapest realism on the board.
+- **Phase A — derive, don't add (cheap, high realism).** ✅ **Shipped.** VPD + DLI are derived from
+  temp/RH/light + an assumed photoperiod (`simulation/horticulture.py`), the stored light scalar is
+  now read by the tick (light + VPD are gentle, generously-banded health terms in `_health_target`,
+  tuned in `balance.yaml` under `simulation.light` / `simulation.vpd`), and all three (VPD/DLI/PPFD)
+  are exposed on `/state` via `plant_dict(..., metrics=...)`. Neutral at the optimal band, so the
+  suite stayed green (147 tests). *Next within A:* let VPD modulate transpiration/mildew directly.
 - **Phase B — physiology.** Photosynthesis + transpiration + a real **EC/pH→uptake** model and the
   stress ledger. Bigger per-hour cost → **land the sim-cost-cap first** (BACKLOG 🟠), profile with
   the load/soak test, then ship.

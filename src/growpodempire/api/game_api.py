@@ -480,7 +480,7 @@ def plant_state(player_id, plant_id):
             sim = SimulationService(s)
             plant = sim.get_state(player_id, plant_id)
             events = sim.get_events(plant_id, limit=20)
-            payload = S.plant_dict(plant)
+            payload = S.plant_dict(plant, metrics=sim.metrics(plant))
             payload["recent_events"] = [S.event_dict(e) for e in events]
         return jsonify(payload)
     except GameError as e:
