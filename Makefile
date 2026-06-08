@@ -1,7 +1,7 @@
 # GROWv2 developer tasks. Local devs: `make setup` once, then `make test`.
 # A venv is used so installs never collide with system packages (e.g. a
 # distro-managed PyYAML, which is what breaks a bare `pip install` on some boxes).
-.PHONY: setup test lint check-memory serve clean
+.PHONY: setup test lint check-memory check-migrations serve clean
 
 VENV ?= .venv
 PY := $(VENV)/bin/python
@@ -21,6 +21,9 @@ lint: ## Run the same lint gate CI uses
 
 check-memory: ## Validate the memory layer (links, ✅ citations, structure)
 	$(PY) scripts/check_memory.py
+
+check-migrations: ## Fail if the Alembic graph has more than one head (forks)
+	$(PY) scripts/check_single_head.py
 
 serve: ## Run the API locally
 	$(PY) server.py

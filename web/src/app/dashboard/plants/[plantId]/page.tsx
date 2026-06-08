@@ -6,11 +6,14 @@ import { useQuery } from "@tanstack/react-query";
 import { RequireAuth } from "@/components/layout/RequireAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { LoadingBlock } from "@/components/ui/Spinner";
+import { ErrorState } from "@/components/ui/States";
 import { PlantVisual } from "@/components/plant/PlantVisual";
 import { StatBars } from "@/components/plant/StatBars";
 import { ConditionBadges } from "@/components/plant/ConditionBadges";
 import { CareButtons } from "@/components/plant/CareButtons";
 import { EventLog } from "@/components/plant/EventLog";
+import { PlantMetrics } from "@/components/plant/PlantMetrics";
+import { AdvisorPanel } from "@/components/plant/AdvisorPanel";
 import { usePlantState } from "@/hooks/usePlantState";
 import { useStrainMap } from "@/hooks/queries";
 import { useSession } from "@/lib/session";
@@ -20,7 +23,7 @@ import { titleCase, num, dateTime } from "@/lib/format";
 
 function PlantDetail({ plantId }: { plantId: string }) {
   const { playerId } = useSession();
-  const { data: plant, isLoading, isError, error } = usePlantState(playerId!, plantId);
+  const { data: plant, isLoading, isError, error, refetch } = usePlantState(playerId!, plantId);
   const { map } = useStrainMap();
   const events = useQuery({
     queryKey: queryKeys.events(plantId),
@@ -31,12 +34,12 @@ function PlantDetail({ plantId }: { plantId: string }) {
   if (isLoading) return <LoadingBlock label="Loading plant…" />;
   if (isError || !plant)
     return (
-      <Card>
-        <p className="text-sm text-gray-300">Couldn&apos;t load plant: {error?.message}</p>
+      <div className="space-y-3">
+        <ErrorState error={error} onRetry={() => refetch()} />
         <Link href="/dashboard" className="text-sm text-grow-300">
           ← Back to dashboard
         </Link>
-      </Card>
+      </div>
     );
 
   const strain = map.get(plant.strain_id);
@@ -50,7 +53,15 @@ function PlantDetail({ plantId }: { plantId: string }) {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader
-            title={strain?.name ?? "Plant"}
+            title={
+              strain ? (
+                <Link href={`/lab/strains/${strain.id}`} className="hover:text-grow-300">
+                  {strain.name}
+                </Link>
+              ) : (
+                "Plant"
+              )
+            }
             subtitle={`${titleCase(plant.growth_stage)} · ${num(plant.height, 1)} cm`}
           />
           <div className="flex items-center justify-center rounded-lg bg-ink-900/60 py-4">
@@ -61,7 +72,13 @@ function PlantDetail({ plantId }: { plantId: string }) {
           </div>
         </Card>
 
-        <Card className="lg:col-span-2 space-y-4">
+        <Card className="space-y-4 lg:col-span-2">
+          {plant.metrics && (
+            <div>
+              <h3 className="instrument-label mb-2">Scientist readouts</h3>
+              <PlantMetrics plant={plant} />
+            </div>
+          )}
           <div>
             <h3 className="mb-2 text-sm font-semibold text-gray-300">Vitals</h3>
             <StatBars plant={plant} />
@@ -78,6 +95,8 @@ function PlantDetail({ plantId }: { plantId: string }) {
           </div>
         </Card>
       </div>
+
+      <AdvisorPanel plantId={plant.id} />
 
       <Card>
         <CardHeader title="Event log" subtitle="Stage changes, stress onsets and care actions" />

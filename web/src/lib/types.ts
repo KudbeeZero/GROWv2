@@ -53,6 +53,9 @@ export interface Player {
   created_at: string | null;
   balance?: number;
   wallet?: Wallet;
+  /** Lifetime prestige titles. */
+  cannabis_cup_title?: string | null;
+  university_title?: string | null;
   /** Returned exactly once, on player creation. */
   api_key?: string;
 }
@@ -138,9 +141,20 @@ export interface PlantEvent {
   payload: Record<string, unknown> | null;
 }
 
+/** Derived scientist readouts exposed on GET .../state. */
+export interface PlantMetrics {
+  vpd_kpa: number | null;
+  dli_mol: number | null;
+  ppfd: number | null;
+  photoperiod_hours: number | null;
+}
+
 export interface PlantState extends Plant {
+  metrics?: PlantMetrics;
   recent_events: PlantEvent[];
 }
+
+export type CureStatus = "none" | "curing" | "cured";
 
 export interface Harvest {
   id: string;
@@ -152,8 +166,13 @@ export interface Harvest {
   thc_actual: number | null;
   cbd_actual: number | null;
   rarity: Rarity;
+  terpenes?: Record<string, number> | null;
   sale_value: number | null;
   sold: boolean;
+  cure_status?: CureStatus;
+  cure_started_at?: string | null;
+  cure_target_hours?: number | null;
+  cure_quality_bonus?: number | null;
   harvested_at: string | null;
   nft_asset_id: number | null;
   nft_status: NftStatus;
@@ -219,4 +238,209 @@ export type LeaderboardKind = "richest" | "breeders" | "harvests" | "level";
 /** Error body shape returned by the API on failures. */
 export interface ApiErrorBody {
   error: string;
+}
+
+// ---- Strain knowledge / provenance / lineage (the trust + GenBank layer) ----
+
+export interface StrainKnowledge {
+  strain_id: string;
+  name: string;
+  slug: string;
+  rarity: Rarity;
+  lineage_type: LineageType;
+  is_base_catalog: boolean;
+  in_knowledge_base: boolean;
+  /** Free-form encyclopedia entry from data/strain_knowledge.yaml. */
+  knowledge: Record<string, unknown> | null;
+  note?: string;
+}
+
+export interface Provenance {
+  strain_id: string;
+  verifiable: boolean;
+  verified?: boolean;
+  rng_seed?: number;
+  parent_a_id?: string | null;
+  parent_b_id?: string | null;
+  bred_at?: string | null;
+  max_value_delta?: number;
+  mismatched_traits?: string[];
+  method?: string;
+  reason?: string;
+}
+
+export interface LineageNode {
+  strain_id: string;
+  name: string;
+  generation: number;
+  rarity: Rarity;
+  verified?: boolean;
+  rng_seed?: number;
+  parent_a_id?: string | null;
+  parent_b_id?: string | null;
+  root?: boolean;
+  is_base_catalog?: boolean;
+}
+
+export interface Lineage {
+  strain_id: string;
+  fully_verified: boolean;
+  node_count: number;
+  root_count: number;
+  truncated: boolean;
+  lineage: LineageNode[];
+}
+
+// ---- AI Master Grower ----
+
+export interface CareSuggestion {
+  action: string;
+  urgency: "now" | "soon" | "optional";
+  reason: string;
+}
+
+export interface AdvisorReport {
+  provider: string;
+  summary: string;
+  severity: "healthy" | "minor" | "serious" | "critical" | Severity;
+  diagnosis: string;
+  suggestions: CareSuggestion[];
+}
+
+export interface AutoCareResult {
+  plant: Plant;
+  actions_taken: Array<Record<string, unknown>>;
+  spent: number;
+  remaining: number;
+}
+
+// ---- Seasonal Cannabis Cup ----
+
+export interface Cup {
+  id: string;
+  edition: string;
+  season: string;
+  title: string;
+  status: "open" | "judged" | string;
+  entry_fee: number;
+  prize_pool: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  judged_at: string | null;
+  winner_id: string | null;
+  champion_strain_id: string | null;
+}
+
+export interface CupEntry {
+  id: string;
+  cup_id: string;
+  player_id: string;
+  strain_id: string;
+  strain_name: string;
+  score: number;
+  rank: number | null;
+  prize_grow: number;
+  submitted_at: string | null;
+}
+
+export interface CupCurrent {
+  cup: Cup | null;
+  standings?: CupEntry[];
+}
+
+export interface CupEnterResult {
+  cup_id: string;
+  edition: string;
+  entry_id: string;
+  score: number;
+  balance: number;
+}
+
+export interface HallOfFameEntry {
+  edition?: string;
+  season?: string;
+  title?: string;
+  winner_id?: string | null;
+  winner?: string | null;
+  champion_strain?: string | null;
+  champion_strain_id?: string | null;
+  judged_at?: string | null;
+  [k: string]: unknown;
+}
+
+// ---- GrowPod University ----
+
+export type CourseStatus = "available" | "locked" | "enrolled" | "completed";
+
+export interface CourseProgress {
+  study_hours_remaining: number;
+  practical_met: boolean;
+  practical: string;
+}
+
+export interface CatalogCourse {
+  key: string;
+  name: string;
+  department: string | null;
+  credits: number | null;
+  level_req: number;
+  duration_hours: number | null;
+  tuition: number;
+  prereqs: string[];
+  perks: Record<string, unknown>;
+  lecture_topic: string | null;
+}
+
+export interface CatalogDegree {
+  key: string;
+  name: string;
+  tier: string | null;
+  title: string | null;
+  required_courses: string[];
+  perks: Record<string, unknown>;
+  xp_reward: number;
+}
+
+export interface UniversityCatalog {
+  departments: Record<string, string>;
+  courses: CatalogCourse[];
+  degrees: CatalogDegree[];
+}
+
+export interface TranscriptCourse extends CatalogCourse {
+  practical: Record<string, unknown> | null;
+  status: CourseStatus;
+  progress: CourseProgress | null;
+}
+
+export interface TranscriptDegree extends CatalogDegree {
+  completed_required: string[];
+  earned: boolean;
+  claimable: boolean;
+}
+
+export interface Transcript {
+  player_id: string;
+  title: string | null;
+  departments: Record<string, string>;
+  courses: TranscriptCourse[];
+  degrees: TranscriptDegree[];
+}
+
+export interface Enrollment {
+  id: string;
+  player_id: string;
+  course_key: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface LectureReport {
+  provider: string;
+  title: string;
+  summary: string;
+  content: string;
+  key_takeaways: string[];
+  quiz_question: string;
 }

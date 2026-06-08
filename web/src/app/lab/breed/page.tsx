@@ -2,25 +2,44 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { RequireAuth } from "@/components/layout/RequireAuth";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { LoadingBlock } from "@/components/ui/Spinner";
 import { Field, Select, TextInput } from "@/components/ui/Field";
-import { useToast } from "@/components/ui/Toast";
+import { RarityChip } from "@/components/ui/Pills";
+import { Constellation } from "@/components/viz/Constellation";
+import { genomeGraph } from "@/components/viz/graphAdapters";
+import { useApiMutation } from "@/hooks/useApiMutation";
 import { useStrains } from "@/hooks/queries";
-import { api, ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { queryKeys } from "@/lib/queryKeys";
-import { RARITY_STYLES, titleCase, num } from "@/lib/format";
+import { num } from "@/lib/format";
 import type { Strain } from "@/lib/types";
+
+function ParentCloud({ strain, tag }: { strain?: Strain; tag: string }) {
+  if (!strain) return null;
+  const { nodes, edges } = genomeGraph(strain);
+  return (
+    <div>
+      <div className="instrument-label mb-1">
+        {tag} · {strain.name}
+      </div>
+      <Constellation
+        mode="graph"
+        nodes={nodes}
+        edges={edges}
+        height={220}
+        showCount={false}
+        accent={tag === "PARENT A" ? "#38bdf8" : "#a78bfa"}
+      />
+    </div>
+  );
+}
 
 function BreedInner() {
   const { playerId } = useSession();
-  const toast = useToast();
-  const qc = useQueryClient();
   const strains = useStrains({});
 
   const [parentA, setParentA] = useState("");
@@ -31,27 +50,19 @@ function BreedInner() {
   const all = strains.data ?? [];
   const a = parentA || all[0]?.id || "";
   const b = parentB || all[1]?.id || "";
+  const aStrain = all.find((s) => s.id === a);
+  const bStrain = all.find((s) => s.id === b);
   const bred = all.filter((s) => !s.is_base_catalog);
 
-  const breed = useMutation<Strain, ApiError>({
-    mutationFn: () => api.breeding.breed(playerId!, a, b, { name: name || undefined }),
-    onSuccess: (offspring) => {
-      setResult(offspring);
-      toast.success(`Bred "${offspring.name}"`);
-      qc.invalidateQueries({ queryKey: ["strains"] });
-      qc.invalidateQueries({ queryKey: queryKeys.seeds(playerId!) });
-      qc.invalidateQueries({ queryKey: queryKeys.wallet(playerId!) });
-    },
-    onError: (e) => toast.error(e.message),
+  const breed = useApiMutation(() => api.breeding.breed(playerId!, a, b, { name: name || undefined }), {
+    invalidate: [["strains"], queryKeys.seeds(playerId ?? ""), queryKeys.wallet(playerId ?? "")],
+    successMessage: (o) => `Bred "${o.name}"`,
+    onSuccess: (o) => setResult(o),
   });
 
-  const stabilize = useMutation<Strain, ApiError, string>({
-    mutationFn: (strainId) => api.strains.stabilize(playerId!, strainId),
-    onSuccess: (s) => {
-      toast.success(`Stabilized "${s.name}" → ${Math.round(s.stability * 100)}%`);
-      qc.invalidateQueries({ queryKey: ["strains"] });
-    },
-    onError: (e) => toast.error(e.message),
+  const stabilize = useApiMutation((strainId: string) => api.strains.stabilize(playerId!, strainId), {
+    invalidate: [["strains"]],
+    successMessage: (s) => `Stabilized "${s.name}" → ${Math.round(s.stability * 100)}%`,
   });
 
   if (strains.isLoading) return <LoadingBlock label="Loading strains…" />;
@@ -61,12 +72,12 @@ function BreedInner() {
       <Link href="/lab" className="text-sm text-grow-300 hover:underline">
         ← Back to Strain Lab
       </Link>
-      <h1 className="text-2xl font-bold">Breeding & Stabilization</h1>
+      <h1 className="text-2xl font-bold">Breeding &amp; Stabilization</h1>
 
       <Card>
         <CardHeader
           title="Cross two parents"
-          subtitle="Offspring inherit blended traits; fresh crosses lose stability until stabilized."
+          subtitle="Two constellations merge into a child cloud — offspring inherit blended traits; the seed is provably fair."
         />
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Field label="Parent A">
@@ -91,28 +102,42 @@ function BreedInner() {
             <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Auto" />
           </Field>
         </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <ParentCloud strain={aStrain} tag="PARENT A" />
+          <ParentCloud strain={bStrain} tag="PARENT B" />
+        </div>
+
         <div className="mt-3">
-          <Button
-            loading={breed.isPending}
-            disabled={a === b}
-            onClick={() => breed.mutate()}
-          >
+          <Button loading={breed.isPending} disabled={a === b} onClick={() => breed.mutate()}>
             🧬 Breed (fee applies)
           </Button>
           {a === b && <span className="ml-2 text-xs text-amber-400">Pick two different parents.</span>}
         </div>
 
         {result && (
-          <div className="mt-4 rounded-lg border border-grow-700 bg-grow-900/30 p-3">
+          <div className="mt-4 space-y-3 rounded-lg border border-grow-700 bg-grow-900/20 p-3">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-grow-200">{result.name}</span>
-              <Badge className={RARITY_STYLES[result.rarity]}>{titleCase(result.rarity)}</Badge>
-              <span className="text-xs text-gray-400">Gen {result.generation}</span>
+              <RarityChip rarity={result.rarity} />
+              <span className="instrument-label">GEN {result.generation}</span>
             </div>
-            <div className="mt-1 text-xs text-gray-400">
+            <div className="text-xs text-gray-400">
               THC {num(result.thc_range[0], 1)}–{num(result.thc_range[1], 1)}% · Stability{" "}
               {Math.round(result.stability * 100)}% · A seed was added to your inventory.
             </div>
+            {result.genome && (
+              <Constellation
+                mode="graph"
+                {...genomeGraph(result)}
+                height={240}
+                caption="OFFSPRING GENOME"
+                accent="#76c024"
+              />
+            )}
+            <Link href={`/lab/strains/${result.id}`} className="inline-block text-sm text-grow-300 hover:underline">
+              Open in Strain Lab → verify its provenance
+            </Link>
           </div>
         )}
       </Card>
@@ -132,11 +157,11 @@ function BreedInner() {
                 className="flex items-center justify-between gap-2 rounded-md border border-ink-700 bg-ink-900/50 px-3 py-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-200">{s.name}</span>
-                  <Badge className={RARITY_STYLES[s.rarity]}>{titleCase(s.rarity)}</Badge>
-                  <span className="text-xs text-gray-500">
-                    stability {Math.round(s.stability * 100)}%
-                  </span>
+                  <Link href={`/lab/strains/${s.id}`} className="text-sm text-gray-200 hover:text-grow-300">
+                    {s.name}
+                  </Link>
+                  <RarityChip rarity={s.rarity} />
+                  <span className="text-xs text-gray-500">stability {Math.round(s.stability * 100)}%</span>
                 </div>
                 <Button
                   size="sm"

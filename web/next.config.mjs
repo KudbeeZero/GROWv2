@@ -4,19 +4,23 @@
 // NEXT_PUBLIC_API_BASE so the Content-Security-Policy connect-src stays in sync.
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:10000";
 
-// Defence-in-depth HTTP security headers. The CSP is the primary mitigation for
-// XSS (which would otherwise be able to exfiltrate the API key from
-// localStorage): scripts/styles are restricted to same-origin, and network
-// calls are limited to self + the configured API origin.
+// Defence-in-depth HTTP security headers.
+//
+// CSP note: the App Router emits inline bootstrap/hydration scripts. The only
+// ways to allow them are a per-request nonce (which can't be baked into the
+// statically-prerendered pages this app ships) or 'unsafe-inline'. We take
+// 'unsafe-inline' — the same posture already used for styles. Script *sources*
+// are still locked to same-origin (no attacker-hosted scripts) and eval is
+// disallowed, so this keeps meaningful XSS mitigation while letting the app
+// actually hydrate. connect-src is limited to self + the configured API origin.
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "img-src 'self' data: blob:",
-  // Next.js injects inline styles; allow them. Scripts stay same-origin.
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   `connect-src 'self' ${API_BASE}`,
   "form-action 'self'",

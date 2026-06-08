@@ -7,11 +7,12 @@ import { PlayerBadge } from "./PlayerBadge";
 
 const LINKS = [
   { href: "/dashboard", label: "Grow" },
-  { href: "/lab", label: "Strain Lab" },
+  { href: "/lab", label: "Lab" },
   { href: "/market", label: "Market" },
-  { href: "/contracts", label: "Contracts" },
+  { href: "/cup", label: "Cup" },
+  { href: "/university", label: "University" },
   { href: "/leaderboards", label: "Leaderboards" },
-  { href: "/account", label: "Account" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export function NavBar() {

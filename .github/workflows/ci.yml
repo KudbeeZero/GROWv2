@@ -34,6 +34,9 @@ jobs:
       - name: Check memory integrity (links, ✅ citations, structure)
         run: python scripts/check_memory.py
 
+      - name: Check single Alembic head (no migration forks)
+        run: python scripts/check_single_head.py
+
       - name: Database migrations apply cleanly
         run: alembic upgrade head
 

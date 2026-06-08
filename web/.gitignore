@@ -25,3 +25,11 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# test coverage
+/coverage
+
+# playwright
+/test-results
+/playwright-report
+/playwright/.cache

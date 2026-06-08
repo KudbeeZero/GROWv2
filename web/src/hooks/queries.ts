@@ -129,3 +129,84 @@ export function useLeaderboard(board: LeaderboardKind) {
     queryFn: () => api.leaderboards.get(board),
   });
 }
+
+export function useStrain(strainId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.strain(strainId ?? ""),
+    queryFn: () => api.strains.get(strainId!),
+    enabled: !!strainId,
+  });
+}
+
+export function useStrainKnowledge(strainId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.knowledge(strainId ?? ""),
+    queryFn: () => api.strains.knowledge(strainId!),
+    enabled: !!strainId,
+  });
+}
+
+export function useProvenance(strainId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.provenance(strainId ?? ""),
+    queryFn: () => api.strains.provenance(strainId!),
+    enabled: !!strainId,
+  });
+}
+
+export function useLineage(strainId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.lineage(strainId ?? ""),
+    queryFn: () => api.strains.lineage(strainId!),
+    enabled: !!strainId,
+  });
+}
+
+export function useHarvests() {
+  const { playerId, isAuthed } = useSession();
+  return useQuery({
+    queryKey: queryKeys.harvests(playerId ?? ""),
+    queryFn: () => api.harvests.list(playerId!),
+    enabled: isAuthed,
+  });
+}
+
+export function useCupCurrent() {
+  return useQuery({
+    queryKey: queryKeys.cupCurrent(),
+    queryFn: () => api.cup.current(),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useCupStandings(cupId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.cupStandings(cupId ?? ""),
+    queryFn: () => api.cup.standings(cupId!),
+    enabled: !!cupId,
+  });
+}
+
+export function useHallOfFame() {
+  return useQuery({
+    queryKey: queryKeys.hallOfFame(),
+    queryFn: () => api.cup.hallOfFame(),
+  });
+}
+
+export function useUniversityCatalog() {
+  return useQuery({
+    queryKey: queryKeys.uniCatalog(),
+    queryFn: () => api.university.catalog(),
+    staleTime: 60_000,
+  });
+}
+
+export function useTranscript() {
+  const { playerId, isAuthed } = useSession();
+  return useQuery({
+    queryKey: queryKeys.transcript(playerId ?? ""),
+    queryFn: () => api.university.transcript(playerId!),
+    enabled: isAuthed,
+  });
+}

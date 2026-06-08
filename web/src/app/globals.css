@@ -4,10 +4,18 @@
 
 :root {
   color-scheme: dark;
+  /* System font stacks — no build-time webfont fetch (offline-clean, CSP-safe).
+     tailwind.config.ts maps font-sans/font-mono to these variables. */
+  --font-sans:
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", Menlo,
+    Consolas, monospace;
 }
 
 body {
-  @apply bg-ink-900 text-gray-100 antialiased;
+  @apply bg-ink-950 text-gray-100 antialiased;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 /* ---- Plant body animations (intensity scaled via --stress 0..1) ---- */
@@ -110,7 +118,43 @@ body {
   .gpe-anim-droop,
   .gpe-bug,
   .gpe-mildew,
-  .gpe-sheen {
-    animation: none;
+  .gpe-sheen,
+  .animate-spin,
+  .animate-twinkle,
+  .animate-pulse-ring,
+  .animate-fade-up {
+    animation: none !important;
   }
+}
+
+/* ---- Signature motif: instrument labels + glowing surfaces ---- */
+@layer components {
+  /* Monospace, uppercase, wide-tracked label — the "research instrument" voice
+     (matches the NODES / DRAG·SCROLL·LIVE PARTICLES readouts in the brand). */
+  .instrument-label {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    @apply text-[10px] uppercase tracking-[0.25em] text-gray-500;
+  }
+  .instrument-value {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    @apply tabular-nums;
+  }
+  /* A frosted panel surface that sits on the dark canvas. */
+  .panel {
+    @apply rounded-xl border border-ink-700 bg-ink-900/70 backdrop-blur;
+  }
+  .text-glow-grow {
+    text-shadow: 0 0 10px rgba(118, 192, 36, 0.55);
+  }
+  .text-glow-accent {
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.55);
+  }
+}
+
+/* Near-black canvas with a faint radial vignette — the constellation stage. */
+.canvas-dark {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(118, 192, 36, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(56, 189, 248, 0.05), transparent 60%),
+    #070a0e;
 }

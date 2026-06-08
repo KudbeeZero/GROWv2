@@ -71,14 +71,47 @@ once they appear here. Last reconciled: **2026-06-08**.
   champion rewards (one-of-a-kind legendary trophy strain + permanent title + Hall of Fame). Public
   `/cup/*` + authed enter; +9 tests. *Next (⬜): on-chain trophy NFT (Sprint 4), judged terpene-cluster
   categories, grower-reputation tie-in.* Per `docs/memory/design/05-events-and-competition.md`.
-- 🟠 ⬜ **CI: enforce a single Alembic head** — add `alembic heads | wc -l == 1` (or `alembic upgrade
-  head`) as a guard; a fork at `fbb8fceedacd` was only caught by manual testing this session.
+- 🟠 ✅ **CI: enforce a single Alembic head** (2026-06-08) — `scripts/check_single_head.py` (reads the
+  migration graph via `ScriptDirectory`, fails with an actionable `alembic merge` hint on a fork),
+  wired into `make check-migrations` + a CI step before `alembic upgrade head`. Catches the fork class
+  of bug (e.g. the old `fbb8fceedacd` fork) automatically instead of by manual testing.
 - 🟡 ✅ **GrowPod University** (2026-06-08) — `services/university_service.py` + `lecturer_service.py`
   + `data/curriculum.yaml` + `CourseEnrollment`/`DegreeProgress` + migration `e7a9c1b3f2d8`: enroll
   (tuition sink) → time + practical study → degrees (permanent perks via the research effect keys +
   a title + XP), taught by an AI Professor (mock for CI, Claude in prod). Public `/university/catalog`
   + authed enroll/complete/claim/lecture; +13 tests. Grounded in a cited curriculum research report.
   *Next (⬜): quizzes, more departments, Doctorate tier, diploma NFTs.* Per `docs/memory/design/06-university.md`.
+- 🟡 ✅ **Web client — full UI build** (2026-06-08, branch `claude/growv2-web-ui-build-MZWZE`) — the
+  Next 15 client now covers all seven screen groups (onboarding hero · grow dashboard with VPD/DLI/PPFD
+  · strain lab + encyclopedia + DNA/lineage constellations + Verify provenance · GenBank galaxy ·
+  market fixed/auctions/contracts · Cannabis Cup + Hall of Fame · University catalog/transcript/course
+  + AI Professor lecture reader · Profile with lifetime titles). Centerpiece: dependency-free
+  `web/src/components/viz/Constellation.tsx` (the genetic-constellation signature language). Green
+  typecheck/lint/build + live-API contract smoke. Post-build cleanup: fixed a Constellation
+  stale-deps bug (genome graphs reused locus ids across strains → now keyed on content + edges),
+  hex-sanitized canvas colors + position clamp, retired `/account`+`/contracts` → redirects, and an
+  a11y pass (Modal Escape/`role=dialog`, ARIA tabs, `aria-pressed` chips, input/select labels,
+  reduced-motion). Follow-up pass: **constellation perf** (O(n²) repulsion → uniform spatial-hash
+  grid, semantics preserved) and a **Vitest unit-test harness** (71 tests over `format.ts` +
+  `graphAdapters.ts`, `pool: forks` for sandbox/CI robustness, wired into web CI). See standup
+  `2026-06-08-lut-report-web-ui-build.md`.
+- 🟠 ✅ **Web e2e smoke (Playwright)** (2026-06-08) — mocked-API Playwright suite (`web/e2e/`,
+  `playwright.config.ts`) over onboarding + authed dashboard + university; `test:e2e` script + a CI
+  `e2e` job. It immediately caught **two real browser-only bugs**, both fixed: (1) the CSP
+  `script-src 'self'` blocked Next's inline hydration scripts so the app blanked in-browser — fixed
+  by allowing `'unsafe-inline'` for scripts (sources still locked to self, eval still blocked);
+  (2) the dashboard's Zustand selector returned a fresh `[]` each render → React #185 infinite loop
+  that crashed the page for players with no locally-stored ids — fixed with a stable reference.
+- 🟡 ⬜ **Education-gated Master Grower knowledge** (owner idea, 2026-06-08) — tie advisor depth +
+  unlocks (tips/tricks, rare bio-DNA traits, breeding **pollen**, "DNA-in-the-seed") to University
+  progress. Composes existing systems: degree perks (research effect keys) raise an advisor knowledge
+  tier and unlock breeding consumables that bias the still-seeded, provably-fair cross. Needs a design
+  doc + balance pass; no new infra.
+- 🟡 ⬜ **Sponsored / branded content (revenue)** (owner idea, 2026-06-08) — real cannabis brands
+  sponsoring cultivars, branded equipment/pods, and promotions, using the on-chain asset layer to
+  sidestep traditional ad/banking restrictions. A "sponsored cultivar" is a GenBank entry with
+  verifiable provenance + brand tag. Needs a partner/content model + a no-dark-patterns guardrail
+  (ties into the trust layer charter). Business/LiveOps track.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

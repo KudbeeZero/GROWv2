@@ -2,7 +2,8 @@
 
 A cannabis-growing game with a persistent economy, real genetics/crossbreeding, a real-time grow
 simulation, and an Algorand on-chain asset layer. Phases 1–3 (DB + economy, simulation, on-chain
-ASA/NFT) are built and tested. This roadmap takes it from "working backend" to "production game."
+ASA/NFT) are built and tested, and **Sprints 1–3** (hardening, gameplay depth, and the full web
+client) have shipped. This roadmap takes it from "working backend" to "production game."
 
 **Legend:** ✅ done · 🔨 in progress · ⬜ planned. Each sprint is ~2 weeks with explicit exit
 criteria. "Roles" are functional hats, not headcount.
@@ -52,7 +53,27 @@ criteria. "Roles" are functional hats, not headcount.
 - ✅ Market, breeding lab, strain catalog, leaderboards, contracts, account UIs
 - ✅ Real-time updates via polling (React Query `refetchInterval`; the lazy sim advances on read)
 - ✅ Read-only `GET /players/<id>/pods` and `/plants` endpoints + web CI (lint/typecheck/build)
-- **Exit:** a player completes the full loop in-browser; plant visuals change with sim state.
+- **Exit:** a player completes the full loop in-browser; plant visuals change with sim state. ✅
+
+> Beyond the original client v1, the **full web UI** shipped (2026-06-08, branch
+> `claude/growv2-web-ui-build-MZWZE`): all seven screen groups — onboarding · grow dashboard with
+> live VPD/DLI/PPFD readouts · strain lab + encyclopedia + DNA/lineage constellations + Verify
+> provenance · GenBank galaxy · market (fixed/auctions/contracts) · Cannabis Cup + Hall of Fame ·
+> University catalog/transcript + AI Professor lecture reader · Profile with lifetime titles. The
+> signature dependency-free `<Constellation>` Canvas engine renders DNA/breeding/GenBank. See
+> `docs/memory/standups/2026-06-08-lut-report-web-ui-build.md`. *(Next: Playwright e2e.)*
+
+> Also shipped beyond the original Sprint 1–3 plan (see `docs/memory/BACKLOG.md`):
+> - **Sim depth — Phase A**: derived **VPD + DLI** with the stored light scalar wired into the tick
+>   (`simulation/horticulture.py`), exposed on `/state`.
+> - **Strain knowledge base**: a scientist-grade encyclopedia for every catalog strain (catalog grown
+>   16→22) at `GET /strains/<id>/knowledge`.
+> - **Provably-fair provenance/lineage**: verifiable breeding replay (`/strains/<id>/provenance`) and
+>   the whole pedigree / GenBank family tree (`/strains/<id>/lineage`).
+> - **Seasonal Cannabis Cup**: per-season competition with deterministic scoring + lifetime champion
+>   rewards (`/cup/*`).
+> - **GrowPod University**: enroll → study → degrees (permanent perks) taught by an AI Professor
+>   (`/university/*`).
 
 ## Sprint 4 — Real TestNet + IPFS (Days 43–56) ⬜
 **Goal:** assets are really on-chain.
