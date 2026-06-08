@@ -20,12 +20,14 @@ export function Tabs({
   className?: string;
 }) {
   return (
-    <div className={`flex flex-wrap gap-1 border-b border-ink-700 ${className}`}>
+    <div role="tablist" className={`flex flex-wrap gap-1 border-b border-ink-700 ${className}`}>
       {tabs.map((t) => {
         const on = t.key === active;
         return (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={on}
             onClick={() => onChange(t.key)}
             className={`relative -mb-px rounded-t-md border-b-2 px-4 py-2 text-sm transition-colors ${
               on

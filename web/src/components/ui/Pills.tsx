@@ -57,6 +57,7 @@ export function DepartmentChip({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`rounded-full border px-3 py-1 text-xs transition-colors ${
         active
           ? "border-grow-500 bg-grow-700 text-white"

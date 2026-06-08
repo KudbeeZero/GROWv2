@@ -85,8 +85,11 @@ once they appear here. Last reconciled: **2026-06-08**.
   market fixed/auctions/contracts · Cannabis Cup + Hall of Fame · University catalog/transcript/course
   + AI Professor lecture reader · Profile with lifetime titles). Centerpiece: dependency-free
   `web/src/components/viz/Constellation.tsx` (the genetic-constellation signature language). Green
-  typecheck/lint/build + live-API contract smoke. *Next (⬜): Playwright e2e, retire legacy
-  `/account`+`/contracts`, constellation perf (spatial hashing).* See standup
+  typecheck/lint/build + live-API contract smoke. Post-build cleanup: fixed a Constellation
+  stale-deps bug (genome graphs reused locus ids across strains → now keyed on content + edges),
+  hex-sanitized canvas colors + position clamp, retired `/account`+`/contracts` → redirects, and an
+  a11y pass (Modal Escape/`role=dialog`, ARIA tabs, `aria-pressed` chips, input/select labels,
+  reduced-motion). *Next (⬜): Playwright e2e, constellation perf (spatial hashing).* See standup
   `2026-06-08-lut-report-web-ui-build.md`.
 - 🟡 ⬜ **Education-gated Master Grower knowledge** (owner idea, 2026-06-08) — tie advisor depth +
   unlocks (tips/tricks, rare bio-DNA traits, breeding **pollen**, "DNA-in-the-seed") to University

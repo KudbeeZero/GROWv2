@@ -174,6 +174,7 @@ function LectureReader({ courseKey, topic }: { courseKey: string; topic: string 
           <select
             value={plantId}
             onChange={(e) => setPlantId(e.target.value)}
+            aria-label="Plant context for lecture"
             className="rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-xs text-gray-200"
           >
             <option value="">No plant context</option>

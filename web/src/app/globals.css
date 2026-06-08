@@ -118,8 +118,12 @@ body {
   .gpe-anim-droop,
   .gpe-bug,
   .gpe-mildew,
-  .gpe-sheen {
-    animation: none;
+  .gpe-sheen,
+  .animate-spin,
+  .animate-twinkle,
+  .animate-pulse-ring,
+  .animate-fade-up {
+    animation: none !important;
   }
 }
 

@@ -127,6 +127,7 @@ function ProfileInner() {
                   value={addr}
                   onChange={(e) => setAddr(e.target.value)}
                   placeholder="Algorand address"
+                  aria-label="Algorand wallet address"
                 />
                 <Button size="sm" loading={link.isPending} disabled={!addr.trim()} onClick={() => link.mutate()}>
                   Link
@@ -175,8 +176,8 @@ function ProfileInner() {
           {ledger.isLoading ? (
             <LoadingBlock />
           ) : (
-            <div className="max-h-80 overflow-y-auto">
-              <table className="w-full text-left text-xs">
+            <div className="max-h-80 overflow-auto">
+              <table className="w-full min-w-[28rem] text-left text-xs">
                 <thead className="sticky top-0 bg-ink-800 text-gray-400">
                   <tr>
                     <th className="py-1 pr-2">When</th>

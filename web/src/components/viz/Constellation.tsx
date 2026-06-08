@@ -69,9 +69,16 @@ interface Props {
 }
 
 const TAU = Math.PI * 2;
+const HEX6 = /^#[0-9a-f]{6}$/i;
+
+/** Guarantee a 6-digit hex so `color + "88"` (alpha) is always valid CSS. */
+function safeHex(color: string | undefined, fallback: string): string {
+  return color && HEX6.test(color) ? color : fallback;
+}
 
 /** Generate points filling a 7-leaflet cannabis leaf in normalized [-1,1], y up. */
-function leafParticles(count: number, accent: string): Particle[] {
+function leafParticles(count: number, accentRaw: string): Particle[] {
+  const accent = safeHex(accentRaw, "#76c024");
   // angle (deg from +x), relative length — longest leaflet straight up.
   const leaflets: Array<[number, number]> = [
     [90, 1.0],
@@ -152,7 +159,8 @@ function leafParticles(count: number, accent: string): Particle[] {
   return out;
 }
 
-function graphParticles(nodes: ConstNode[], accent: string): Particle[] {
+function graphParticles(nodes: ConstNode[], accentRaw: string): Particle[] {
+  const accent = safeHex(accentRaw, "#76c024");
   const n = nodes.length;
   return nodes.map((node, i) => {
     const pinned = node.fx !== undefined && node.fy !== undefined;
@@ -171,7 +179,7 @@ function graphParticles(nodes: ConstNode[], accent: string): Particle[] {
       hx: x,
       hy: y,
       r: 2.5 + w * 5 + (node.hub ? 3 : 0),
-      color: node.color ?? accent,
+      color: safeHex(node.color, accent),
       hub: !!node.hub,
       label: node.label,
       phase: Math.random() * TAU,
@@ -196,8 +204,24 @@ export function Constellation({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [count, setCount] = useState(0);
 
-  // Re-run when the structural inputs change.
-  const graphKey = mode === "graph" ? nodes.map((n) => n.id).join(",") : "leaf";
+  // Keep the latest onSelect without re-running (and resetting) the whole
+  // simulation when the parent re-creates the callback.
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
+
+  // Re-run when the structural inputs OR their content change. Node ids alone
+  // aren't enough: a strain's genome graph reuses the same locus ids across
+  // strains (thc, cbd, …), so we must key on weights/colors/edges too, or the
+  // canvas would show a stale graph after navigating strain→strain.
+  const graphKey =
+    mode === "graph"
+      ? JSON.stringify({
+          n: nodes.map((n) => [n.id, n.weight ?? 0, n.color ?? "", n.hub ? 1 : 0, n.fx ?? "", n.fy ?? ""]),
+          e: edges.map((e) => [e.a, e.b, e.strength ?? 1]),
+        })
+      : `leaf:${leafCount}:${accent}`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -316,6 +340,9 @@ export function Constellation({
           p.vy *= 0.9;
           p.x += p.vx;
           p.y += p.vy;
+          // hard bound so sustained dragging can't drift particles to NaN-land
+          p.x = Math.max(-2.5, Math.min(2.5, p.x));
+          p.y = Math.max(-2.5, Math.min(2.5, p.y));
         }
       }
     }
@@ -444,7 +471,7 @@ export function Constellation({
       }
     }
     function onClick(e: MouseEvent) {
-      if (!onSelect || mode !== "graph") return;
+      if (!onSelectRef.current || mode !== "graph") return;
       const rect = canvas!.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -458,7 +485,7 @@ export function Constellation({
           best = p;
         }
       }
-      if (best) onSelect(best.id);
+      if (best) onSelectRef.current?.(best.id);
     }
     function onWheel(e: WheelEvent) {
       e.preventDefault();

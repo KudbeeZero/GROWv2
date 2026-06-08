@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 export function Modal({
   open,
@@ -13,6 +13,16 @@ export function Modal({
   title: ReactNode;
   children: ReactNode;
 }) {
+  // Close on Escape (only while open).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
@@ -20,6 +30,8 @@ export function Modal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="w-full max-w-lg rounded-xl border border-ink-600 bg-ink-800 p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -28,7 +40,7 @@ export function Modal({
           <button
             onClick={onClose}
             className="rounded p-1 text-gray-400 hover:bg-ink-700 hover:text-gray-100"
-            aria-label="close"
+            aria-label="Close dialog"
           >
             ✕
           </button>
