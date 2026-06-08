@@ -49,3 +49,18 @@ persistent memory, with a daily LUT standup ritual. **Why:** Work was moving fas
 sessions with no durable, structured context; higher layers were drifting from reality (roadmap,
 build log). **Consequences:** Invariant changes must update Layer 0/1 in the same change; one
 standup per working day under `standups/`.
+
+### 2026-06-08 — Adopt a Design Codex sub-layer (vision/intent beside Layer 1)
+**Decision:** Add `docs/memory/design/` as a low-volatility, vision-forward sub-layer next to
+ARCHITECTURE: a global game-vision doc that leads with the **proprietary moat** (a real
+plant-physiology sim → generative genetics → Proof-of-Cultivation → on-chain GenBank → discovery
+economy → earned mastery → AI data flywheel), plus deep docs for the scientist-grade simulation,
+generative genetics, and grower-skill mastery. Every capability is tagged `✅/🔨/⬜`.
+**Why:** Work was moving fast with no durable home for *deep design intent* — what makes the game
+different and how the sim/genetics get there — separate from ARCHITECTURE's "what must not break."
+The user wants the depth (horticulture realism, endless genetics, time-as-investment) to be the
+differentiator and to be captured before it's built. **Consequences:** The codex *proposes* shape;
+work still becomes real via BACKLOG. Moat claims lean on planned (⬜) systems — especially anything
+on-chain (the chain is mocked; GenBank/Proof-of-Cultivation are ⬜) — and must stay tagged so the
+docs never oversell. When a 🔨/⬜ ships, flip its tag and update ARCHITECTURE/CLAUDE in the same
+change if an invariant moved.

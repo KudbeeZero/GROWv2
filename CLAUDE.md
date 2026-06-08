@@ -45,6 +45,7 @@ distro-managed PyYAML on some boxes — use `make setup` (a venv) locally to avo
 |------|------|---------|-----------|
 | 0 | `CLAUDE.md` (this file) | Identity, invariants, how to work | Low |
 | 1 | `docs/memory/ARCHITECTURE.md` | System map + load-bearing invariants ("don't break") | Low |
+| 1+ | `docs/memory/design/` | **Design Codex** — deep vision/intent: the moat, the scientist-grade sim & generative-genetics targets ("where we're going") | Low |
 | 2 | `docs/memory/DECISIONS.md` | Why things are the way they are (ADR log) | Append-only |
 | 3 | `docs/memory/BACKLOG.md` | Prioritized work: now / medium / low | High |
 | 4 | `docs/memory/standups/` | Dated LUT round-table reports | Daily |

@@ -9,10 +9,17 @@ stable layer can be trusted and the volatile layer can churn.
 ```
 Layer 0  CLAUDE.md (repo root)        identity · invariants · how to work   ← always loaded
 Layer 1  ARCHITECTURE.md              system map · module boundaries · the "don't break" list
+   ↳     design/                      Design Codex — deep vision/intent (the moat · sim & genetics targets)
 Layer 2  DECISIONS.md                 append-only log of *why* (lightweight ADRs)
 Layer 3  BACKLOG.md                   prioritized work — immediate / medium / low
 Layer 4  standups/YYYY-MM-DD-*.md     dated LUT round-table reports (the daily ritual)
 ```
+
+**ARCHITECTURE vs the Design Codex.** ARCHITECTURE.md is *where we are* — the invariants that must
+not break today. `design/` is *where we're going* — the deep design intent for the simulation,
+genetics, and mastery that make GROWv2 different, written vision-forward with every capability tagged
+`✅ built · 🔨 partial · ⬜ planned`. The codex only *proposes* the shape of work; it becomes real
+through BACKLOG. See `design/README.md`.
 
 Read **top-down**: Layer 0 is short and stable; each layer down is more detailed and more
 volatile. Write **bottom-up**: new facts land in a standup or the backlog; when a fact becomes

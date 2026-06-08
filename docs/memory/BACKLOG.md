@@ -25,6 +25,8 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🟠 ⬜ **Idempotency keys on mutations** — protect ledger/economy from double-submits & retries.
 - 🟠 ⬜ **Load/soak test the `/state` catch-up path** to find the cost knee before players do.
 - 🟠 ⬜ **Web e2e smoke** (Playwright) over the full loop; today web CI is lint/typecheck/build only.
+- 🟠 ⬜ **Sim depth — Phase A (derive VPD + DLI; wire the stored light scalar into the tick).** The
+  cheapest scientist-grade realism on the board; no new stored inputs. Per `docs/memory/design/01-simulation-horticulture.md`.
 
 ## 🟡 Low / later (valuable, not urgent)
 - 🟡 ⬜ Sprint 5 multiplayer: P2P trading, friends, co-op rooms, anti-cheat hardening.
@@ -34,6 +36,11 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🟡 ⬜ Observability upgrade: logs → metrics → traces as traffic grows.
 - 🟡 ⬜ Secrets management hardening before any real value (encrypt keys at rest / secrets manager).
 - 🟡 ⬜ Age-gating/compliance + ToS/privacy review (simulated cannabis only).
+- 🟡 ⬜ **Generative genetics** — polygenic genome + mutation/epistasis/G×E toward endless,
+  *discovered* strains; genome fingerprint → on-chain GenBank + Proof-of-Cultivation (needs Sprint 4
+  chain). Per `docs/memory/design/02-genetics.md`.
+- 🟡 ⬜ **Grower-skill mastery** — use-based skill trees (effort/time → capability), distinct from the
+  spend-based research tree; the equipment bridge. Per `docs/memory/design/03-grower-skills.md`.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);
