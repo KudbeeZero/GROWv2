@@ -25,7 +25,10 @@ A genuine quantitative-genetics core already exists (`src/growpodempire/genetics
 - **Provenance already persisted:** `Strain` rows store `genome` (JSON), `stability`, `generation`,
   `parent_a_id/parent_b_id`, `created_by_player_id`; `BreedingEvent.rng_seed` is saved for replay
   (`db/models.py`). **This is the seed of Proof-of-Cultivation** — the seed is already on record.
-- **16 founder strains** seeded from `src/growpodempire/data/strains.yaml`.
+- **22 founder strains** seeded from `src/growpodempire/data/strains.yaml` (the original 16 + 6
+  iconic landraces/classics), each with a scientist-grade encyclopedia entry in
+  `data/strain_knowledge.yaml` (lineage, origin, cannabinoid/terpene detail, cultivation params),
+  surfaced at `GET /strains/<id>/knowledge`. A test enforces 1:1 catalog↔KB sync.
 
 This is a strong base. It is also **bounded**: a fixed 14-trait vector, blend-and-jitter
 inheritance, no novelty. The vision is to make the space *open*.

@@ -49,6 +49,21 @@ from ..db.models import (
 )
 from ..db.seed import slugify
 
+import yaml
+
+_STRAIN_KB_CACHE = None
+
+
+def load_strain_knowledge() -> dict:
+    """Load (and cache) the strain knowledge base — scientist-grade encyclopedia
+    keyed by strain slug (see data/strain_knowledge.yaml)."""
+    global _STRAIN_KB_CACHE
+    if _STRAIN_KB_CACHE is None:
+        path = get_settings().strain_knowledge_file
+        with open(path, "r", encoding="utf-8") as fh:
+            _STRAIN_KB_CACHE = yaml.safe_load(fh) or {}
+    return _STRAIN_KB_CACHE
+
 
 class GameError(Exception):
     """Domain error surfaced to the API as a 400."""
@@ -701,6 +716,34 @@ class GameService:
             "truncated": bool(stack),
             "lineage": lineage,
         }
+
+    # ----- Knowledge base -------------------------------------------------
+    def strain_knowledge(self, strain_id: str) -> dict:
+        """Scientist-grade encyclopedia for a strain — lineage, origin, sensory
+        & effect profile, cannabinoid/terpene detail, and cultivation parameters
+        (flowering, optimal environment, yields). Merges the live strain row with
+        the static knowledge base keyed by slug (see data/strain_knowledge.yaml).
+        Read-only; public. Player-bred strains have no encyclopedia entry — their
+        story is their verifiable lineage (`verify_lineage`).
+        """
+        strain = self.get_strain(strain_id)
+        entry = load_strain_knowledge().get(strain.slug)
+        out = {
+            "strain_id": strain.id,
+            "name": strain.name,
+            "slug": strain.slug,
+            "rarity": strain.rarity,
+            "lineage_type": strain.lineage_type,
+            "is_base_catalog": strain.is_base_catalog,
+            "in_knowledge_base": entry is not None,
+            "knowledge": entry,
+        }
+        if entry is None:
+            out["note"] = (
+                "No encyclopedia entry — a player-bred strain. Its story is its "
+                "verifiable lineage; see GET /strains/<id>/lineage."
+            )
+        return out
 
     # ----- Harvest & sale -------------------------------------------------
     def harvest_plant(

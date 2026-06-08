@@ -56,6 +56,11 @@ once they appear here. Last reconciled: **2026-06-08**.
   replay to sim/weather/discovery, a genome fingerprint, a public faucet-vs-sink economy view, advisor
   confidence/uncertainty surfacing, and a no-dark-patterns charter. Per `docs/memory/design/04-honesty-and-trust.md`.
 
+- 🟡 ✅ **Strain knowledge base** (2026-06-08) — catalog grown 16→22 (iconic landraces/classics) +
+  `data/strain_knowledge.yaml`, a scientist-grade encyclopedia (lineage, origin, cannabinoid/terpene
+  detail, cultivation params) for every catalog strain, at public `GET /strains/<id>/knowledge`. A
+  test enforces 1:1 catalog↔KB sync. *Next: deepen/verify entries from the deep-research campaign.*
+
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);
 Wave 2 depth (search, leaderboards, auctions, weather, automation, stabilization, ASA settlement,

@@ -95,3 +95,15 @@ fail_under=78`, operational `scripts/` omitted), wired into `make test` and the 
 guards the test safety net itself from silently eroding — the third leg of the 2026-06-08 standup's
 §4A "make truth automatic." **Consequences:** CI fails below the floor; **raise the floor as
 coverage climbs, never lower it.** One-shot ops scripts are excluded (run by ops, not the unit suite).
+
+### 2026-06-08 — Strain knowledge base as a separate data layer
+**Decision:** Keep `data/strains.yaml` as the canonical game **genome** and add a separate
+`data/strain_knowledge.yaml` — a scientist-grade **encyclopedia** keyed by slug (lineage, origin,
+sensory/effect profile, cannabinoid & terpene detail, cultivation parameters) — surfaced read-only at
+`GET /strains/<id>/knowledge` (`services/game_service.py:strain_knowledge`). Grow the catalog 16→22.
+**Why:** reference/horticulture metadata is the differentiator ("every piece of data a scientist
+would want") but must not entangle the genome/balance that drives gameplay; separating them keeps the
+sim/economy clean and lets the KB grow independently. **Consequences:** a test enforces 1:1
+catalog↔KB sync (every strain has an entry, no orphans); the KB ships from source like the other data
+files (no `package_data`). The encyclopedia figures are reference ranges, not per-plant sim outputs;
+a `/deep-research` campaign will verify/deepen them.

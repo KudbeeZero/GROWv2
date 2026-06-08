@@ -38,6 +38,9 @@ class Settings:
         self.strains_file: str = os.environ.get(
             "STRAINS_FILE", os.path.join(DATA_DIR, "strains.yaml")
         )
+        self.strain_knowledge_file: str = os.environ.get(
+            "STRAIN_KNOWLEDGE_FILE", os.path.join(DATA_DIR, "strain_knowledge.yaml")
+        )
 
         # Optional global RNG seed for reproducible breeding in deterministic
         # contexts (tests / demos). When None, breeding draws a fresh seed.

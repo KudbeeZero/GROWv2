@@ -217,6 +217,19 @@ def strain_lineage(strain_id):
         return _error(str(e), 404)
 
 
+@game_bp.get("/strains/<strain_id>/knowledge")
+def strain_knowledge(strain_id):
+    """Scientist-grade encyclopedia for a catalog strain — lineage, origin,
+    sensory/effect profile, cannabinoid & terpene detail, cultivation
+    parameters. Public/read-only."""
+    try:
+        with session_scope() as s:
+            payload = GameService(s).strain_knowledge(strain_id)
+        return jsonify(payload)
+    except GameError as e:
+        return _error(str(e), 404)
+
+
 # ----- Seeds & planting --------------------------------------------------
 @game_bp.get("/players/<player_id>/seeds")
 @require_player

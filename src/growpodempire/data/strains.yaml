@@ -135,3 +135,51 @@ strains:
     terpenes: [caryophyllene, limonene, pinene]
     traits: {indica_ratio: 0.4, thc: 20, cbd: 0.5, flowering_time: 63, yield: 550, difficulty: 2, disease_resistance: 0.6, pest_resistance: 0.6, vigor: 0.8}
     dominant: []
+
+  - name: Acapulco Gold
+    lineage_type: landrace
+    rarity: rare
+    stability: 1.0
+    terpenes: [pinene, caryophyllene]
+    traits: {indica_ratio: 0.1, thc: 20, cbd: 0.5, flowering_time: 70, yield: 450, difficulty: 3, disease_resistance: 0.6, pest_resistance: 0.6, vigor: 0.85}
+    dominant: [vigor]
+
+  - name: Maui Wowie
+    lineage_type: landrace
+    rarity: uncommon
+    stability: 0.9
+    terpenes: [limonene, pinene]
+    traits: {indica_ratio: 0.2, thc: 19, cbd: 0.5, flowering_time: 70, yield: 450, difficulty: 3, disease_resistance: 0.6, pest_resistance: 0.6, vigor: 0.85}
+    dominant: [vigor]
+
+  - name: Chemdawg
+    lineage_type: hybrid
+    rarity: rare
+    stability: 0.78
+    terpenes: [caryophyllene, myrcene, limonene]
+    traits: {indica_ratio: 0.45, thc: 24, cbd: 0.5, flowering_time: 63, yield: 480, difficulty: 4, disease_resistance: 0.5, pest_resistance: 0.5, vigor: 0.8}
+    dominant: [thc]
+
+  - name: AK-47
+    lineage_type: hybrid
+    rarity: uncommon
+    stability: 0.85
+    terpenes: [myrcene, caryophyllene, pinene]
+    traits: {indica_ratio: 0.35, thc: 20, cbd: 1, flowering_time: 60, yield: 500, difficulty: 2, disease_resistance: 0.6, pest_resistance: 0.6, vigor: 0.8}
+    dominant: [vigor]
+
+  - name: Bubba Kush
+    lineage_type: hybrid
+    rarity: uncommon
+    stability: 0.85
+    terpenes: [caryophyllene, myrcene, limonene]
+    traits: {indica_ratio: 0.8, thc: 19, cbd: 0.5, flowering_time: 56, yield: 450, difficulty: 2, disease_resistance: 0.6, pest_resistance: 0.6, vigor: 0.7}
+    dominant: [indica_ratio]
+
+  - name: Super Lemon Haze
+    lineage_type: hybrid
+    rarity: rare
+    stability: 0.8
+    terpenes: [limonene, terpinolene, caryophyllene]
+    traits: {indica_ratio: 0.25, thc: 22, cbd: 0.5, flowering_time: 70, yield: 520, difficulty: 3, disease_resistance: 0.5, pest_resistance: 0.6, vigor: 0.85}
+    dominant: [thc]
