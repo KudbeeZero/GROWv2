@@ -16,11 +16,16 @@ import { usePods, usePlantsList } from "@/hooks/queries";
 import { useSession } from "@/lib/session";
 import { useIdStore } from "@/lib/localStore";
 
+// Stable empty reference so the Zustand selector never returns a fresh array
+// (which would loop useSyncExternalStore → React #185).
+const NO_IDS: string[] = [];
+
 function DashboardInner() {
   const { playerId } = useSession();
   const pods = usePods();
   const plants = usePlantsList();
-  const localPlantIds = useIdStore((s) => (playerId ? s.plantIds(playerId) : []));
+  const localPlantIds =
+    useIdStore((s) => (playerId ? s.ids[playerId]?.plantIds : undefined)) ?? NO_IDS;
   const [showCreate, setShowCreate] = useState(false);
 
   if (pods.isLoading) return <LoadingBlock label="Loading your grow…" />;

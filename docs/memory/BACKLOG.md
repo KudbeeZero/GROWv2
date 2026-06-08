@@ -93,8 +93,15 @@ once they appear here. Last reconciled: **2026-06-08**.
   a11y pass (Modal Escape/`role=dialog`, ARIA tabs, `aria-pressed` chips, input/select labels,
   reduced-motion). Follow-up pass: **constellation perf** (O(n²) repulsion → uniform spatial-hash
   grid, semantics preserved) and a **Vitest unit-test harness** (71 tests over `format.ts` +
-  `graphAdapters.ts`, `pool: forks` for sandbox/CI robustness, wired into web CI). *Next (⬜):
-  Playwright e2e over the full loop.* See standup `2026-06-08-lut-report-web-ui-build.md`.
+  `graphAdapters.ts`, `pool: forks` for sandbox/CI robustness, wired into web CI). See standup
+  `2026-06-08-lut-report-web-ui-build.md`.
+- 🟠 ✅ **Web e2e smoke (Playwright)** (2026-06-08) — mocked-API Playwright suite (`web/e2e/`,
+  `playwright.config.ts`) over onboarding + authed dashboard + university; `test:e2e` script + a CI
+  `e2e` job. It immediately caught **two real browser-only bugs**, both fixed: (1) the CSP
+  `script-src 'self'` blocked Next's inline hydration scripts so the app blanked in-browser — fixed
+  by allowing `'unsafe-inline'` for scripts (sources still locked to self, eval still blocked);
+  (2) the dashboard's Zustand selector returned a fresh `[]` each render → React #185 infinite loop
+  that crashed the page for players with no locally-stored ids — fixed with a stable reference.
 - 🟡 ⬜ **Education-gated Master Grower knowledge** (owner idea, 2026-06-08) — tie advisor depth +
   unlocks (tips/tricks, rare bio-DNA traits, breeding **pollen**, "DNA-in-the-seed") to University
   progress. Composes existing systems: degree perks (research effect keys) raise an advisor knowledge
