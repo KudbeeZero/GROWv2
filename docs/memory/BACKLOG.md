@@ -17,6 +17,12 @@ once they appear here. Last reconciled: **2026-06-08**.
   (sets `PYTHONPATH=src`, mirroring CI). Validated: hook exit 0, `make setup && make test` →
   139 passed.
 
+- 🔴 ✅ **Memory-integrity gate** (2026-06-08) — `scripts/check_memory.py` + `make check-memory` +
+  a CI step fail on broken internal links, ✅ claims citing missing paths, or a codex that drifts out
+  of the layer map. Plus a master `docs/memory/MAP.md` (layer map + code↔doc index + moat dashboard);
+  ARCHITECTURE invariant #9 + two DECISIONS entries (Phase A, provable fairness) reconcile the layers
+  with this session's code. *(Partly delivers the "docs-drift check" from the 2026-06-08 standup §4A.)*
+
 ## 🟠 Medium (next 1–2 weeks — quality & the next real capability)
 - 🟠 ⬜ **CI coverage gate** — measure + floor coverage so the 139-test suite can't silently rot.
 - 🟠 ⬜ **Sprint 4: real TestNet + IPFS** — fund treasury, run `reset_asa`, wire `ASA_ID`; move NFT

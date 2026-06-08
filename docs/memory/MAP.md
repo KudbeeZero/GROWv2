@@ -1,0 +1,98 @@
+# 🗺️ Memory Map — the master index
+
+> The single navigable map of GROWv2's memory system: how the layers fit, which **code** each
+> design doc describes, and the live **build state** of the vision. When you land here cold, read
+> top-to-bottom. Capability tags everywhere: ✅ built · 🔨 partial · ⬜ planned. This map is
+> enforced — `scripts/check_memory.py` fails CI if a link breaks, a ✅ claim cites a missing path,
+> or the codex falls out of the layer map.
+
+## The layers at a glance
+```mermaid
+flowchart TD
+    L0["Layer 0 · CLAUDE.md<br/>identity · invariants · how to work"]
+    MAP["MAP.md — this file<br/>master index + code↔doc map"]
+    L1["Layer 1 · ARCHITECTURE.md<br/>system map · the 'don't break' list — where we ARE"]
+    CODEX["Layer 1+ · design/ — Design Codex<br/>vision · the moat · sim/genetics/skills/trust — where we're GOING"]
+    L2["Layer 2 · DECISIONS.md<br/>append-only ADRs (why)"]
+    L3["Layer 3 · BACKLOG.md<br/>prioritized work — now / medium / low"]
+    L4["Layer 4 · standups/<br/>dated LUT reports (daily ritual)"]
+    CHECK(["scripts/check_memory.py<br/>CI gate: links · ✅ citations · structure"])
+
+    L0 --> MAP
+    MAP --> L1
+    MAP --> CODEX
+    MAP --> L2
+    MAP --> L3
+    MAP --> L4
+    L1 <-. "are ↔ going" .-> CODEX
+    CHECK -. enforces .-> MAP
+```
+
+| Layer | File | Role | Volatility |
+|------|------|------|-----------|
+| 0 | `CLAUDE.md` | Always-loaded identity + invariants + how to work | Low |
+| — | `docs/memory/MAP.md` | This master index: layer map + code↔doc + build state | Low |
+| 1 | `docs/memory/ARCHITECTURE.md` | System map + the "don't break" list (where we are) | Low |
+| 1+ | `docs/memory/design/` | **Design Codex** — vision/intent (where we're going) | Low |
+| 2 | `docs/memory/DECISIONS.md` | Append-only "why" log (ADRs) | Append-only |
+| 3 | `docs/memory/BACKLOG.md` | Prioritized work — now / medium / low | High |
+| 4 | `docs/memory/standups/` | Dated LUT round-table reports | Daily |
+
+Read **top-down** (Layer 0 is short + stable; each layer down is more detailed + volatile). Write
+**bottom-up** (facts land in a standup/backlog; permanent truth gets promoted into ARCHITECTURE /
+CLAUDE, with the *why* in DECISIONS). ARCHITECTURE and the Codex are siblings: one is "where we
+are," the other "where we're going."
+
+## Code ↔ doc index
+Each Design Codex doc, the concrete code it describes, and that code's state today. Paths are
+repo-relative (under `src/growpodempire/` unless noted); every ✅ here is checked by
+`scripts/check_memory.py`.
+
+| Codex doc | Primary code it maps to | State today |
+|-----------|-------------------------|-------------|
+| `design/00-game-vision.md` | cross-cutting — see the moat/pillar dashboard below | mixed |
+| `design/01-simulation-horticulture.md` | `simulation/engine.py` · `simulation/horticulture.py` · `simulation/curing.py` · `simulation/reactions.py` · `data/balance.yaml` (`simulation:`) | 🔨 Phase A done |
+| `design/02-genetics.md` | `genetics/traits.py` · `genetics/breeding.py` · `data/strains.yaml` · `services/game_service.py` (breed/stabilize/verify) | 🔨 14-trait core |
+| `design/03-grower-skills.md` | `services/leveling_service.py` · `services/research_service.py` · `services/progression_service.py` · `data/balance.yaml` (`research`/`leveling`) | 🔨 no skill trees yet |
+| `design/04-honesty-and-trust.md` | `simulation/engine.py` (`_rng_for`) · `services/game_service.py` (`verify_strain`) · `api/game_api.py` (`/provenance`) · `economy/ledger.py` · `services/advisor_service.py` | 🔨 fairness shipped for breeding |
+
+**What the sim engine actually reads today** (`simulation/engine.py`): water, nutrient (single
+scalar), temperature, humidity, pH, **light (PPFD)**, **derived leaf VPD**, pest & disease levels;
+genes consumed = `flowering_time`, `pest_resistance`, `disease_resistance` only. Everything richer
+(photosynthesis, transpiration, EC/ions, spectrum/photoperiod, the other 11 genes) is 🔨/⬜ — see
+`design/01-simulation-horticulture.md`.
+
+## The moat — build-state dashboard
+The seven differentiators from `design/00-game-vision.md`, mapped to where they're real.
+
+| # | Moat differentiator | Today | Anchor in code |
+|---|---------------------|-------|----------------|
+| 1 | Real plant-physiology engine, not a timer | 🔨 Phase A | `simulation/engine.py`, `simulation/horticulture.py` |
+| 2 | Generative, provably-unique genetics | 🔨 14-trait | `genetics/breeding.py` |
+| 3 | Proof-of-Cultivation (seed ✅ + verify ✅; on-chain ⬜) | 🔨 | `services/game_service.py`, `db/models.py` |
+| 4 | The GenBank (shared on-chain pedigree) | ⬜ | pedigree fields in `db/models.py`; chain mocked |
+| 5 | Discovery economy (first-finder credit) | ⬜ | — |
+| 6 | Mastery + time as the gate / anti-whale | 🔨 | `services/leveling_service.py`, `services/research_service.py` |
+| 7 | AI Master Grower data flywheel | 🔨 | `services/advisor_service.py`, `services/autocare_service.py` |
+
+The five player-facing pillars: **The Grow** 🔨 · **The Genetics** 🔨 · **The Mastery** 🔨 ·
+**The Economy** ✅ (`economy/ledger.py`, `economy/pricing.py`) · **The Chain** 🔨 (provider ABC + mock
+real; TestNet/IPFS deferred — Sprint 4).
+
+## Surface area (anchors, not exhaustive)
+- **API:** ~46 routes under `/api/game` in `api/game_api.py` (writes auth'd + rate-limited; reads
+  public). Trust surface: public `GET /strains/<id>/provenance` replays a cross to prove its genome.
+- **Not yet in the Codex** (covered only by ARCHITECTURE/standups, intentionally — gameplay, not
+  moat): `services/contract_service.py`, `services/leaderboard_service.py`,
+  `services/weather_service.py`, `services/minting_service.py`, `services/settlement_service.py`,
+  and the marketplace/auction, shop, and Phase-3 wallet/mint endpoints.
+
+## Maintaining this map
+1. **It's enforced.** `make check-memory` (CI runs it every push) fails on broken internal links,
+   a ✅ claim that cites a missing path, or a missing/unreferenced required memory file. Keep it green.
+2. **Tags are honest.** When a 🔨/⬜ ships, flip its tag here *and* in its codex doc in the same
+   change; if it moved an invariant, update `ARCHITECTURE.md` / `CLAUDE.md` too.
+3. **This is the canonical layer map.** Other files (CLAUDE.md, the codex README) summarize it;
+   when they disagree, this file wins — and the layer-map table here is the one to update first.
+4. **Don't let it sprawl.** It's an index + dashboard, not prose. Deep detail lives in the layer it
+   points at.

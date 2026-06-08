@@ -3,6 +3,10 @@
 The load-bearing map of GROWv2. If you're about to change something here, you're changing the
 foundation — record *why* in `DECISIONS.md` and confirm the invariants still hold.
 
+This is "where we are." For "where we're going" (the moat, the scientist-grade sim & generative
+genetics targets, the trust layer) see the **Design Codex** at `docs/memory/design/README.md`, and
+`docs/memory/MAP.md` for the master code↔doc index and build-state dashboard.
+
 ## System map
 
 ```
@@ -21,9 +25,9 @@ foundation — record *why* in `DECISIONS.md` and confirm the invariants still h
   simulation/      economy/         genetics/          chain/            ai/              │
   (PURE engine)    (ledger,         (traits,           (ABC provider:    (ABC provider:   │
   clock·engine·    pricing,         breeding,          mock + algorand,  mock + claude,   │
-  reactions·       config —         deterministic      factory)          autocare,        │
-  conditions·      Decimal money)   crossbreeding)     TREASURY sentinel factory)         │
-  curing                                                                                   │
+  horticulture·    config —         deterministic      factory)          autocare,        │
+  reactions·       Decimal money)   crossbreeding)     TREASURY sentinel factory)         │
+  conditions·curing  (engine reads light + derived VPD/DLI — Phase A)                      │
                       └───────────────────── db/ (SQLAlchemy models · Alembic · seed) ◄────┘
                                               data/ balance.yaml · strains.yaml (tuning)
 ```
@@ -52,6 +56,11 @@ foundation — record *why* in `DECISIONS.md` and confirm the invariants still h
    mock chain ⇒ no TestNet needed.
 7. **Balance is data, not code.** Tune in `balance.yaml`; the engine reads it.
 8. **Migrations are forward-only and tested.** `alembic upgrade head` runs in CI.
+9. **Randomness is seeded, so outcomes are provably fair.** Every cross, weather roll, and sim step
+   draws from a recorded/derived seed (`BreedingEvent.rng_seed`, `engine._rng_for`). A bred strain
+   can be replayed and verified by anyone via `GET /strains/<id>/provenance`
+   (`services/game_service.py:verify_strain`). Don't introduce unseeded randomness on any gameplay
+   path.
 
 ## Known structural risks (watch these)
 - **Sim cost is O(elapsed hours)** per plant on read. Fine now; needs a cap + background

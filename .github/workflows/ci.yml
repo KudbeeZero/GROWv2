@@ -31,6 +31,9 @@ jobs:
       - name: Lint (syntax & undefined names)
         run: ruff check --select=E9,F63,F7,F82 src tests
 
+      - name: Check memory integrity (links, ✅ citations, structure)
+        run: python scripts/check_memory.py
+
       - name: Database migrations apply cleanly
         run: alembic upgrade head
 

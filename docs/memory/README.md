@@ -4,6 +4,9 @@ A small, deliberate **memory system in Markdown** so any session (human or agent
 project up cold and not break it. The idea: separate *stable truth* from *volatile work* so the
 stable layer can be trusted and the volatile layer can churn.
 
+> **Start at `MAP.md`** — the master index (layer map + code↔doc index + moat build-state dashboard).
+> Integrity is enforced by `scripts/check_memory.py` (`make check-memory`, and CI on every push).
+
 ## The layers
 
 ```

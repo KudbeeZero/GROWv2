@@ -50,4 +50,7 @@ distro-managed PyYAML on some boxes — use `make setup` (a venv) locally to avo
 | 3 | `docs/memory/BACKLOG.md` | Prioritized work: now / medium / low | High |
 | 4 | `docs/memory/standups/` | Dated LUT round-table reports | Daily |
 
-See `docs/memory/README.md` for how the layers fit together and how to maintain them.
+See `docs/memory/MAP.md` for the master map (layer index + code↔doc index + moat build-state
+dashboard) and `docs/memory/README.md` for how the layers fit together and how to maintain them.
+Memory integrity is enforced: `make check-memory` (and CI) fails on broken links, ✅ claims that
+cite missing paths, or a codex that drifts out of the layer map.

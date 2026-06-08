@@ -64,3 +64,26 @@ work still becomes real via BACKLOG. Moat claims lean on planned (⬜) systems �
 on-chain (the chain is mocked; GenBank/Proof-of-Cultivation are ⬜) — and must stay tagged so the
 docs never oversell. When a 🔨/⬜ ships, flip its tag and update ARCHITECTURE/CLAUDE in the same
 change if an invariant moved.
+
+### 2026-06-08 — Phase A horticulture: derive VPD/DLI, read light in the tick
+**Decision:** Add `simulation/horticulture.py` (pure Tetens SVP + leaf-VPD + DLI derivations); the
+engine now reads the stored pod light scalar and the derived VPD as gentle, generously-banded health
+terms (tuned in `balance.yaml` under `simulation.light` / `simulation.vpd`); VPD/DLI/PPFD are exposed
+on `/state`. **Why:** "Derive first" is the cheapest scientist-grade realism — it honors the
+compute-on-read / O(elapsed-hours) cost risk, so heavier physiology (photosynthesis, transpiration,
+EC) waits for Phase B behind the sim-cost-cap. It also turns moat #1 ("a real plant-physiology
+engine, not a timer") into running code. **Consequences:** Bands are neutral at the optimal
+environment, so the suite stayed green; new tuning knobs live in `balance.yaml`; the engine is now a
+small physiology model. The other 11 genes + spectrum/photoperiod remain 🔨/⬜ (see
+`docs/memory/design/01-simulation-horticulture.md`).
+
+### 2026-06-08 — Provably-fair breeding: replay-and-verify
+**Decision:** Expose `GET /strains/<id>/provenance` (`services/game_service.py:verify_strain`) that
+re-runs the deterministic `cross()` from the persisted `BreedingEvent.rng_seed` + the immutable
+parent genomes and confirms the stored genome matches. The breed endpoint already refuses a
+client-supplied seed (anti seed-shopping). **Why:** the seed was already persisted for determinism;
+exposing a public replay turns an internal invariant into a *player-facing* trust property — nobody
+can fabricate or tamper a cultivar's genetics without detection. **Consequences:** establishes the
+"replay & verify" pattern (generalizable to sim/weather/discovery draws), and promotes a new
+invariant — randomness stays seeded so gameplay is auditable (ARCHITECTURE invariant #9). The trust
+layer now has a shipped affordance (🔨 — breeding done; see `docs/memory/design/04-honesty-and-trust.md`).
