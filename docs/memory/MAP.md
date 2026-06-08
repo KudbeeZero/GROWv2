@@ -85,7 +85,10 @@ real; TestNet/IPFS deferred — Sprint 4).
   and `GET /strains/<id>/lineage` replays the whole ancestry back to base-catalog roots.
 - **Strain knowledge base:** `data/strain_knowledge.yaml` — a scientist-grade encyclopedia (lineage,
   origin, cannabinoid/terpene detail, cultivation parameters) for all 22 catalog strains, surfaced at
-  public `GET /strains/<id>/knowledge`. A test enforces 1:1 sync between the catalog and the KB.
+  public `GET /strains/<id>/knowledge`. A test enforces 1:1 sync between the catalog and the KB. It's
+  grounded by a peer-reviewed research reference:
+  `docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md` (a 5-agent deep-research
+  campaign; the source of the KB's name-unreliability + THC-inflation caveats).
 - **Not yet in the Codex** (covered only by ARCHITECTURE/standups, intentionally — gameplay, not
   moat): `services/contract_service.py`, `services/leaderboard_service.py`,
   `services/weather_service.py`, `services/minting_service.py`, `services/settlement_service.py`,

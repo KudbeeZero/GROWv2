@@ -28,7 +28,12 @@ A genuine quantitative-genetics core already exists (`src/growpodempire/genetics
 - **22 founder strains** seeded from `src/growpodempire/data/strains.yaml` (the original 16 + 6
   iconic landraces/classics), each with a scientist-grade encyclopedia entry in
   `data/strain_knowledge.yaml` (lineage, origin, cannabinoid/terpene detail, cultivation params),
-  surfaced at `GET /strains/<id>/knowledge`. A test enforces 1:1 catalog↔KB sync.
+  surfaced at `GET /strains/<id>/knowledge`. A test enforces 1:1 catalog↔KB sync. The KB is grounded
+  by a peer-reviewed research reference
+  (`docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md`) whose load-bearing finding
+  reinforces this doc's thesis: **strain names are unreliable genetic/chemotype identifiers**
+  (Sawler 2015; Schwabe 2019) — so the *genome + verifiable lineage* must be the authoritative
+  identity, and `indica_ratio` is morphology/lore, not a chemotype predictor.
 
 This is a strong base. It is also **bounded**: a fixed 14-trait vector, blend-and-jitter
 inheritance, no novelty. The vision is to make the space *open*.

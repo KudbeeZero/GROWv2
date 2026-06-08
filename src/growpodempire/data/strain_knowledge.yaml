@@ -10,6 +10,17 @@
 # Cannabinoid/terpene/grow figures are typical real-world reference ranges for
 # the cultivar, not the per-plant game outputs (those come from the simulation).
 # Every base-catalog slug MUST have an entry here (enforced by tests).
+#
+# SCIENTIFIC CAVEATS (see docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md):
+#   - Strain NAMES are weak genotype/chemotype identifiers (Sawler 2015; Schwabe 2019: ~90% of
+#     strains had a genetic outlier). Treat `lineage` as canonical LORE, not verified genetics —
+#     especially the clone-era "disputed" lines (OG Kush, Chemdawg, Sour Diesel, Bubba Kush, GG4).
+#   - `genotype` (indica/sativa %) is a morphology/lore axis, NOT a reliable predictor of effect or
+#     chemistry; the vernacular labels are botanically inverted (McPartland & Guy 2017).
+#   - `cannabinoids` THC figures are lab-aggregate/label values, which run ~15-35% HIGH vs assayed
+#     flower (Schwabe 2023); read as inflation-biased upper bounds.
+#   - Real chemotype collapses to ~3 terpene clusters (myrcene / terpinolene / limonene-caryophyllene);
+#     terpinolene-dominant names (Durban Poison, Jack Herer, Haze) are the most reliable.
 
 afghani:
   aka: [Afghan, "Afghani #1"]
@@ -230,7 +241,7 @@ blue-dream:
 
 og-kush:
   aka: ["OG", "Original Gangster Kush"]
-  lineage: "Chemdawg × (Lemon Thai × Hindu Kush) — debated"
+  lineage: "Chemdawg × (Lemon Thai × Hindu Kush) — DISPUTED; bag-seed origin (1990s FL→LA), not genetically verified"
   origin: "USA (Florida/California)"
   type: photoperiod
   genotype: "55% Indica / 45% Sativa"
@@ -258,7 +269,7 @@ og-kush:
 
 sour-diesel:
   aka: ["Sour D", "Sour Deez"]
-  lineage: "Chemdawg × Super Skunk (debated)"
+  lineage: "Chemdawg '91 × ? — DISPUTED second parent (Super Skunk vs DNL); unverifiable folklore"
   origin: "USA (East Coast)"
   type: photoperiod
   genotype: "30% Indica / 70% Sativa"
@@ -367,7 +378,7 @@ girl-scout-cookies:
 
 gorilla-glue-no-4:
   aka: ["GG4", "Original Glue", "Gorilla Glue"]
-  lineage: "Chem's Sister × Sour Dubb × Chocolate Diesel"
+  lineage: "Chem's Sister × Sour Dubb × Chocolate Diesel (breeder-attested; an accidental cross — deep ancestry inherits Chemdawg's uncertainty)"
   origin: "USA (2013)"
   type: photoperiod
   genotype: "50% Indica / 50% Sativa"
@@ -478,7 +489,7 @@ acapulco-gold:
 
 maui-wowie:
   aka: ["Maui Waui", "Mowie Wowie"]
-  lineage: "Hawaiian sativa landrace"
+  lineage: "Hawaiian sativa (landrace-derived, not pristine — later hybridized with Afghani/Thai stock)"
   origin: "USA (Hawaii, Maui)"
   type: photoperiod
   genotype: "80% Sativa / 20% Indica"

@@ -59,7 +59,13 @@ once they appear here. Last reconciled: **2026-06-08**.
 - 🟡 ✅ **Strain knowledge base** (2026-06-08) — catalog grown 16→22 (iconic landraces/classics) +
   `data/strain_knowledge.yaml`, a scientist-grade encyclopedia (lineage, origin, cannabinoid/terpene
   detail, cultivation params) for every catalog strain, at public `GET /strains/<id>/knowledge`. A
-  test enforces 1:1 catalog↔KB sync. *Next: deepen/verify entries from the deep-research campaign.*
+  test enforces 1:1 catalog↔KB sync.
+- 🟡 ✅ **Deep-research campaign** (2026-06-08) — `docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md`:
+  5-agent, peer-reviewed-prioritized reference on lineage, chemotype, cultivation, agronomy, and
+  taxonomy/genetics. Reconciled into the KB (disputed-lineage flags + scientific caveats header).
+- 🟡 ⬜ **KB enrichment pass (research-grounded)** — add a `terpene_cluster` per strain (myrcene /
+  terpinolene / limonene-caryophyllene); model assayed THC as an inflation-biased distribution; wire
+  the PPFD/DLI→yield relationship into the sim (Phase B). Per the research doc's §6 action items.
 
 ## ✅ Recently shipped (2026-06-07) — see standup 2026-06-08
 Foundation P1–P3; Wave 0 retention; Wave 1 hardening (auth/errors/health/CI/docker/openapi);

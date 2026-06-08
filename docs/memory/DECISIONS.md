@@ -107,3 +107,18 @@ sim/economy clean and lets the KB grow independently. **Consequences:** a test e
 catalog↔KB sync (every strain has an entry, no orphans); the KB ships from source like the other data
 files (no `package_data`). The encyclopedia figures are reference ranges, not per-plant sim outputs;
 a `/deep-research` campaign will verify/deepen them.
+
+### 2026-06-08 — Strain names are lore, not genetic ground truth (research-backed)
+**Decision:** Per a 5-agent deep-research campaign (`docs/research/2026-06-08-cannabis-strain-genetics-and-cultivation.md`),
+treat strain **names** and the `indica_ratio`/genotype label as *loose phenotype/morphology lore*, not
+reliable predictors of genetics, chemistry, or effect; keep the genome + verifiable lineage as the
+authoritative identity. Annotate disputed clone-era lineages (OG Kush, Chemdawg, Sour Diesel, Bubba
+Kush, GG4; Maui Wowie as landrace-derived) as such in the KB, and add the THC-inflation / chemotype
+caveats to the KB header. **Why:** the peer-reviewed evidence is strong and convergent — Sawler 2015
+(names/ancestry unreliable; r²=0.36), Schwabe 2019 (90% of strains had a genetic outlier), McPartland
+& Guy 2017 (vernacular indica/sativa is botanically inverted), Reimann-Philipp 2020 (hundreds of names
+→ ~3 terpene chemovars), Schwabe 2023 (THC labels inflated ~15–35%). Honesty is a product pillar
+(`04-honesty-and-trust.md`), so the KB must not present marketing as fact. **Consequences:** future
+enrichment adds a `terpene_cluster` per strain and models assayed THC as an inflation-biased
+distribution; the research also confirms light (PPFD/DLI→yield, ~linear to ~1500–1800) as the
+best-evidenced Phase B sim lever, and validates today's VPD/DLI bands as defensible (vendor-tier).
