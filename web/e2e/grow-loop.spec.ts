@@ -89,7 +89,8 @@ test.describe("plant lifecycle", () => {
     await expect(page.getByRole("button", { name: /Water/ })).toBeEnabled();
     await expect(page.getByRole("button", { name: /Feed/ })).toBeEnabled();
     await expect(page.getByText("Vitals")).toBeVisible();
-    await expect(page.getByText("Care")).toBeVisible();
+    // "Care" also appears in the event-log description, so target the heading.
+    await expect(page.getByRole("heading", { name: "Care" })).toBeVisible();
   });
 
   test("water action shows 'Watered' success toast", async ({
@@ -106,7 +107,9 @@ test.describe("plant lifecycle", () => {
     await expect(waterBtn).toBeEnabled();
     await waterBtn.click();
 
-    await expect(page.getByText("Watered")).toBeVisible();
+    // "Watered" also lands in the event log, so scope to the toast container.
+    const toasts = page.locator("div.fixed.bottom-4.right-4");
+    await expect(toasts.getByText("Watered")).toBeVisible();
   });
 
   test("feed action shows 'Fed nutrients' success toast", async ({
@@ -123,7 +126,9 @@ test.describe("plant lifecycle", () => {
     await expect(feedBtn).toBeEnabled();
     await feedBtn.click();
 
-    await expect(page.getByText("Fed nutrients")).toBeVisible();
+    // "Fed nutrients" also lands in the event log, so scope to the toast container.
+    const toasts = page.locator("div.fixed.bottom-4.right-4");
+    await expect(toasts.getByText("Fed nutrients")).toBeVisible();
   });
 
   test("plant detail event log section renders", async ({
@@ -155,8 +160,9 @@ test.describe("market page", () => {
   }) => {
     await page.goto("/market");
     await waitForHydration(page);
+    // Default tab is fixed-price; an empty market shows this section heading.
     await expect(
-      page.getByText(/No active listings|Active listings/),
+      page.getByRole("heading", { name: "Fixed-price listings" }),
     ).toBeVisible();
   });
 });

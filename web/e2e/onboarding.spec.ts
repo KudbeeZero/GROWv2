@@ -12,8 +12,9 @@ test.describe("create-account flow", () => {
     await page.getByRole("button", { name: "Create account" }).click();
 
     await expect(page.getByText("Save your API key now")).toBeVisible();
-    await expect(page.getByText("Player ID")).toBeVisible();
-    await expect(page.getByText("API key")).toBeVisible();
+    // Use exact match: the helper text below also mentions "player ID".
+    await expect(page.getByText("Player ID", { exact: true })).toBeVisible();
+    await expect(page.getByText("API key", { exact: true })).toBeVisible();
   });
 
   test("API-key reveal → enter game navigates to /dashboard", async ({

@@ -25,7 +25,9 @@ test.describe("dashboard", () => {
   }) => {
     await page.goto("/dashboard");
     await waitForHydration(page);
-    await page.getByRole("button", { name: "+ New Pod" }).click();
+    // The header and the empty-state both expose a "+ New Pod" button; the
+    // header one toggles the create form.
+    await page.getByRole("button", { name: "+ New Pod" }).first().click();
     await expect(
       page.getByRole("heading", { name: "Create a grow pod" }),
     ).toBeVisible();
@@ -39,7 +41,9 @@ test.describe("dashboard", () => {
   }) => {
     await page.goto("/dashboard");
     await waitForHydration(page);
-    await page.getByRole("button", { name: "+ New Pod" }).click();
+    // The header and the empty-state both expose a "+ New Pod" button; the
+    // header one toggles the create form.
+    await page.getByRole("button", { name: "+ New Pod" }).first().click();
 
     const nameInput = page.getByLabel("Pod name");
     await nameInput.clear();

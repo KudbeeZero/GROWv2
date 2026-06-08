@@ -6,9 +6,7 @@ const webUrl = "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./e2e",
-  // Pre-warm all Next.js dev routes before any browser tests run.
-  globalSetup: "./e2e/global-setup.ts",
-  // Dev-mode page compilation + React hydration can take 20-30s on a cold server.
+  // Generous per-test budget: first navigation still pays for React hydration.
   timeout: 90_000,
   expect: { timeout: 30_000 },
   retries: process.env.CI ? 2 : 0,
@@ -38,10 +36,15 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      // Next.js dev server on :3000. API_BASE defaults to :10000 in client.ts.
-      command: "npm run dev",
+      // Production build, not `next dev`: the app's CSP allows 'unsafe-inline'
+      // scripts but NOT 'unsafe-eval', and dev-mode webpack/HMR relies on eval()
+      // — under the CSP that blocks every script, so the app never hydrates and
+      // pages hang on "Loading session…". `next build && next start` emits no
+      // eval, hydrates correctly, and is what actually ships. It also serves
+      // every route precompiled, so no dev-route warmup is needed.
+      command: "npm run build && npm run start",
       url: webUrl,
-      timeout: 60_000,
+      timeout: 180_000,
       reuseExistingServer: !process.env.CI,
     },
   ],
