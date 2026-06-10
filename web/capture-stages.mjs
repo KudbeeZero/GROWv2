@@ -57,24 +57,31 @@ for (const [stage, variant, name] of SHOTS) {
     stdio: "inherit",
   });
 
-  await page.goto(url, { waitUntil: "networkidle" });
+  await page.goto(url, { waitUntil: "domcontentloaded" });
+  // Wait for RequireAuth to finish hydrating (spinner text disappears).
+  await page
+    .waitForFunction(
+      () => !document.body.textContent?.includes("Loading session"),
+      { timeout: 30_000 },
+    )
+    .catch(() => console.log(`  [warn] still loading session for ${name}`));
   // Wait for the plant visual SVG (role=img) to render.
   await page
     .waitForSelector('svg[role="img"]', { timeout: 20_000 })
     .catch(() => console.log(`  [warn] no svg for ${name}`));
-  await page.waitForTimeout(800); // let react-query settle + CSS anim frame
+  await page.waitForTimeout(1000); // let react-query settle + CSS anim frame
 
   // Full plant detail page shot.
   await page.screenshot({ path: `${OUT}/${name}-page.png` });
 
-  // Tight crop of just the plant visual card (the SVG's container).
+  // Tight crop of just the plant visual SVG.
   const svg = page.locator('svg[role="img"]').first();
   if (await svg.count()) {
-    const card = svg.locator("xpath=ancestor::div[contains(@class,'rounded-lg')][1]");
-    const target = (await card.count()) ? card : svg;
-    await target.screenshot({ path: `${OUT}/${name}.png` }).catch(async () => {
-      await svg.screenshot({ path: `${OUT}/${name}.png` });
-    });
+    await svg
+      .screenshot({ path: `${OUT}/${name}.png` })
+      .catch((e) => console.log(`  [warn] svg crop failed ${name}: ${e.message}`));
+  } else {
+    console.log(`  [warn] no SVG to crop for ${name}`);
   }
 
   const label = await svg.getAttribute("aria-label").catch(() => null);

@@ -9,7 +9,7 @@ not yet built.** Nothing here changes runtime behavior.
 | [`EQUIPMENT_ECONOMY.md`](EQUIPMENT_ECONOMY.md) | Lights (wattage→PPFD→yield), tents/power tiers, electricity as a recurring sink, and **equipment depreciation + maintenance** (gear ages, yields less, breaks, needs repair). Data model + formulas + balance keys + a ~5-day phased build plan. | ✅ design complete |
 | [`COSMETICS_AND_MONETIZATION.md`](COSMETICS_AND_MONETIZATION.md) | Skins/wraps/particles, in-game billboards & equipment stickers (parody brands), the store, and **which cosmetics are DB items vs NFTs** — plus the sales model and the compliance flags. | ✅ strategy complete |
 | [`ENGINEERING_PLAYBOOK.md`](ENGINEERING_PLAYBOOK.md) | How elite teams get code correct the first time, and a prioritized checklist to **cut rework** in this repo (real lint gate, Hypothesis, faucet/sink invariant test, mypy, smarter CI). | ✅ research complete |
-| Visual QA / plant-stage screenshots | What a plant actually looks like in the UI at each growth stage + crossbreeding smoke test. | 🔄 running (artifacts land in `artifacts/plant-stages/`) |
+| Visual QA / plant-stage screenshots | [`VISUAL_QA.md`](VISUAL_QA.md) — what a plant looks like at each stage (+ condition variants), screenshots in [`screenshots/`](screenshots/), and 3 verified bugs (flowering==harvest, early stages share a silhouette, breed-API non-determinism). | ✅ complete |
 
 ## On "how do we keep track of all these checks & balances" (the DNA-strand layout)
 That instinct is right, and half of it already exists — the goal is to make the *whole* system legible
