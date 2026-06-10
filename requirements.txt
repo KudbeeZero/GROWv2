@@ -13,6 +13,10 @@ PyYAML==6.0.2
 # Algorand on-chain layer (Phase 3). The app runs without a configured treasury
 # (falls back to an offline mock chain), but this is required to mint on TestNet.
 py-algorand-sdk==2.11.1
+# AlgoKit Utils (Phase 4): unified AlgorandClient + signer-based accounts that
+# replace raw-mnemonic transaction signing. Lazy-imported; only needed for the
+# real on-chain provider (mock chain / CI need neither this nor algosdk).
+algokit-utils>=3.0.0
 # AI "Master Grower" advisor. The app runs without an ANTHROPIC_API_KEY (falls
 # back to an offline mock advisor); this is required for real Claude advice.
 anthropic>=0.49.0

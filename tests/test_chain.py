@@ -62,3 +62,31 @@ def test_metadata_hash_is_deterministic():
     meta = {"name": "Z", "properties": {"a": 1, "b": 2}}
     assert md.metadata_hash(meta) == md.metadata_hash({"properties": {"b": 2, "a": 1}, "name": "Z"})
     assert len(md.metadata_hash(meta)) == 32
+
+
+# --- Phase 4: AlgoKit-based real provider (no algokit-utils in CI) ---------
+def test_algorand_provider_network_guard():
+    """MainNet/TestNet config mismatch is refused before any network call."""
+    from growpodempire.chain.algorand import AlgorandProvider
+
+    AlgorandProvider._guard_network("mainnet", "https://mainnet-api.algonode.cloud")  # ok
+    AlgorandProvider._guard_network("testnet", "https://testnet-api.algonode.cloud")  # ok
+    with pytest.raises(ChainError):
+        AlgorandProvider._guard_network("mainnet", "https://testnet-api.algonode.cloud")
+    with pytest.raises(ChainError):
+        AlgorandProvider._guard_network("testnet", "https://mainnet-api.algonode.cloud")
+
+
+def test_algorand_provider_requires_algokit_or_mnemonic():
+    """Constructing the real provider fails gracefully without algokit-utils
+    installed (CI) or without a treasury mnemonic — never silently."""
+    from growpodempire.chain.algorand import AlgorandProvider
+
+    with pytest.raises(ChainError):
+        AlgorandProvider(
+            algod_url="https://testnet-api.algonode.cloud",
+            algod_token="",
+            treasury_mnemonic="",
+            network_name="testnet",
+        )
+

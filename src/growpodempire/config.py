@@ -74,6 +74,11 @@ class Settings:
         self.ratelimit_default: str = os.environ.get(
             "RATELIMIT_DEFAULT", "240 per minute"
         )
+        # Optional site-wide password gate (HTTP Basic) for private test
+        # deployments — e.g. a staging domain you don't want public yet. When
+        # set, every route except health probes requires the password. Unset =
+        # open (the per-player X-API-Key still guards writes either way).
+        self.site_password = os.environ.get("SITE_PASSWORD") or None
         # Cap on-chain withdrawals per player per rolling 24h (defence in depth
         # around the treasury). 0 disables the cap.
         wd_cap = os.environ.get("MAX_WITHDRAWAL_PER_DAY", "10000")

@@ -51,10 +51,12 @@ test.describe("dashboard", () => {
 
     await page.getByRole("button", { name: "Create Pod" }).click();
 
-    // Success toast and pod card with the pod's name should appear.
-    await expect(page.getByText("E2E Tent Alpha")).toBeVisible({
-      timeout: 15_000,
-    });
+    // The pod card should appear. Target the card heading specifically — the
+    // success toast also contains the pod name, so a plain getByText would hit
+    // a strict-mode violation (and flake on toast timing).
+    await expect(
+      page.getByRole("heading", { name: "E2E Tent Alpha" })
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("empty pod shows 'plant a seed' prompt", async ({

@@ -111,6 +111,19 @@ Each entry: branch · what shipped · test count after merge.
   `POST /players/<id>/plants/<pid>/advisor/auto-care` (rate-limited, gated by `ENABLE_AUTO_CARE`,
   default on). CI uses the mock loop (no key).
 
+## Phase 4 — MainNet prep (AlgoKit Utils signer-based custody)
+- `claude/mainnet-prep-algokit` · Rewrote the real `chain/algorand.py` on **AlgoKit Utils** —
+  unified `AlgorandClient` + a registered **signer** (`account.from_mnemonic` / `set_default_signer`)
+  replacing hand-rolled txn construction and inline raw-key signing. `send.asset_create/transfer/
+  destroy` + `asset.get_by_id`. Added a **network guard** (refuses to start if `ALGORAND_NETWORK`
+  and `ALGOD_URL` disagree — e.g. mainnet network + testnet URL). `algokit-utils` is lazy-imported
+  and added to requirements; the mock chain / CI need neither it nor algosdk. Provider/factory/mock
+  interfaces unchanged, so blast radius is one file.
+- Added an optional **`SITE_PASSWORD`** HTTP-Basic gate for private/staging deployments (every route
+  except `/health`), and **`docs/MAINNET_READINESS.md`** — the irreversible-vs-fixable model and the
+  local → LocalNet → password-gated TestNet → MainNet ladder. Tests cover the network guard, graceful
+  failure without algokit-utils, and the password gate.
+
 ## Session summary
 16 feature branches built + merged to trunk (each its own pushed branch for review):
 daily-stipend-quests, player-leveling, api-key-auth, error-handling-validation,
