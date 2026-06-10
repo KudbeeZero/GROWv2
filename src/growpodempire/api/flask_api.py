@@ -3,7 +3,9 @@ Flask API for GROWv2
 RESTful API endpoints for the cultivation game.
 """
 
-from flask import Flask, jsonify
+import hmac
+
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -53,6 +55,24 @@ def create_app(init_database: bool = True):
 
     # Self-describing API docs: /openapi.json + Swagger UI at /docs.
     register_openapi(app)
+
+    # Optional site-wide password gate for private/staging deployments. Health
+    # probes stay open so load balancers/monitors keep working.
+    if settings.site_password:
+        _open_paths = {"/health", "/readiness"}
+
+        @app.before_request
+        def _require_site_password():
+            if request.path in _open_paths or request.method == "OPTIONS":
+                return None
+            auth = request.authorization
+            if auth and hmac.compare_digest(auth.password or "", settings.site_password):
+                return None
+            return Response(
+                "Authentication required",
+                401,
+                {"WWW-Authenticate": 'Basic realm="GROWv2 (staging)"'},
+            )
 
     # DB-backed game layer (players, economy, strains, breeding, market).
     app.register_blueprint(game_bp)
