@@ -19,13 +19,13 @@ Condition rendering is distinct and works well:
 - **Mildew** — white/grey powdery circles on leaves and buds.
 
 ## Bugs found (verified)
-1. **`flowering.png` == `harvest.png`** (identical md5) — a harvest-ready plant looks exactly like a
-   flowering one. No harvest cue (e.g. amber trichomes / fatter colas). *Fix: give HARVEST a distinct
-   `STAGE_SCALE`/bud treatment in `PlantVisual.tsx`.*
-2. **seed / germination / seedling / vegetative share one silhouette** (`seedling.png` == `vegetative.png`
-   by md5) — only overall scale changes; leaf geometry is identical, and a "Seed · 0 cm" still renders a
-   full leafy plant in a pot. *Fix: a seed/sprout sub-silhouette for the early stages.*
-3. **The breed *API* path is not reproducible for a fixed `rng_seed`** — the genetics engine
+1. ✅ **FIXED — `flowering.png` == `harvest.png`.** `PlantVisual.tsx` was rebuilt; harvest now shows
+   fattened, frosted (trichome), amber-pistilled colas. Confirmed distinct by md5 — see the "after"
+   shots in [`screenshots/after-render/`](screenshots/after-render/) (`flowering.png` ≠ `harvest.png`).
+2. ✅ **FIXED — early stages shared one silhouette.** The rebuilt render gives each stage its own
+   structure: seed = sprout, germination = cotyledons + first leaves, seedling = small, vegetative =
+   bushy. (Original "before" shots remain in [`screenshots/`](screenshots/) as the bug record.)
+3. **The breed *API* path is not reproducible for a fixed `rng_seed`** (still open) — the genetics engine
    (`genetics/breeding.cross`) IS deterministic (same seed → byte-identical 13-trait genome, verified
    for seeds 42 and 777), but two `POST /players/{id}/breed` calls with `rng_seed=777` returned
    different THC (19.74 vs 18.99), neither matching the pure-engine value (20.25). Something in the
